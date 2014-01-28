@@ -28,5 +28,13 @@ public class MainActivity extends Activity {
 		Intent intent  = new Intent(this, CameraTestActivity.class);
 		startActivity(intent);
 	}
+	
+	/** called when user clicks the Bluetooth startbutton
+	 * 
+	 */
+	public void bluetoothStart(View view) {
+		Intent intent  = new Intent(this, BluetoothSetupActivity.class);
+		startActivity(intent);
+	}
 
 }
