@@ -9,20 +9,24 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".BluetoothSetupActivity" >
 
-    <TextView android:id="@+id/title_paired_devices"
+    <TextView
+        android:id="@+id/title_paired_devices"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/title_paired_devices"
-    />
-    <ListView 
+        android:text="@string/title_paired_devices" />
+
+    <ListView
         android:id="@+id/paired_devices"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" ></ListView>
-    <TextView android:id="@+id/title_disovered_devices"
+        android:layout_height="wrap_content" >
+    </ListView>
+
+    <TextView
+        android:id="@+id/title_disovered_devices"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/title_discovered_devices"
-    />
+        android:text="@string/title_discovered_devices" />
+
     <ListView
         android:id="@+id/discovered_devices"
         android:layout_width="fill_parent"

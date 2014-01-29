@@ -1,14 +1,19 @@
 package edu.upenn.seas.seniordesign.starfish;
 
+import java.io.IOException;
 import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.UUID;
 
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Adapter;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -19,6 +24,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -26,9 +32,11 @@ import android.content.IntentFilter;
 import android.os.Build;
 
 public class BluetoothSetupActivity extends FragmentActivity {
-	ArrayAdapter<String> mPairedArrayAdapter;
-	ArrayAdapter<String> mDiscoveredArrayAdapter;
+	ArrayAdapter<BluetoothDeviceWrapper> mPairedArrayAdapter;
+	ArrayAdapter<BluetoothDeviceWrapper> mDiscoveredArrayAdapter;
 	BluetoothAdapter mBluetoothAdapter;
+	OnItemClickListener pairedListener;
+	OnItemClickListener discoveredListener;
 	private static final int REQUEST_ENABLE_BT = 0xFF;
 
 	@SuppressLint("NewApi")
@@ -55,16 +63,21 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		}
 
 		// Create array adapters-- One for paired, one for discovery
-		mPairedArrayAdapter = new ArrayAdapter<String>(this, R.layout.list_item);
-		mDiscoveredArrayAdapter = new ArrayAdapter<String>(this,
+		mPairedArrayAdapter = new ArrayAdapter<BluetoothDeviceWrapper>(this,
 				R.layout.list_item);
+		mDiscoveredArrayAdapter = new ArrayAdapter<BluetoothDeviceWrapper>(
+				this, R.layout.list_item);
+
+		// Find and set up the ListView for already paired devices
+		ListView pairedView = (ListView) findViewById(R.id.paired_devices);
+		pairedListener = new DeviceListItemClickListener();
+		pairedView.setOnItemClickListener(pairedListener);
 
 		// Find and set up the ListView for newly discovered devices
-		ListView pairedView = (ListView) findViewById(R.id.paired_devices);
-		pairedView.setAdapter(mPairedArrayAdapter);
-
 		ListView discoveredView = (ListView) findViewById(R.id.discovered_devices);
 		discoveredView.setAdapter(mDiscoveredArrayAdapter);
+		discoveredListener = new DeviceListItemClickListener();
+		discoveredView.setOnItemClickListener(discoveredListener);
 
 		// Get a set of currently paired devices
 		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter
@@ -73,14 +86,19 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		// If there are paired devices, add each one to the ArrayAdapter
 		if (pairedDevices.size() > 0) {
 			for (BluetoothDevice device : pairedDevices) {
-				mPairedArrayAdapter.add(device.getName() + "\n"
-						+ device.getAddress());
+				mPairedArrayAdapter.add(new BluetoothDeviceWrapper(device));
 			}
+			pairedView.setAdapter(mPairedArrayAdapter);
 		} else {
 			String noDevices = getResources().getText(R.string.none_paired)
 					.toString();
-			mPairedArrayAdapter.add(noDevices);
+			ArrayAdapter<String> noDevicesAdapter = new ArrayAdapter<String>(
+					this, R.layout.list_item);
+			noDevicesAdapter.add(noDevices);
+			pairedView.setAdapter(noDevicesAdapter);
 		}
+		// refresh the ListView so the devices are displayed
+		mPairedArrayAdapter.notifyDataSetChanged();
 
 		// Register the BroadcastReciever
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -161,11 +179,113 @@ public class BluetoothSetupActivity extends FragmentActivity {
 						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 				// Add the name and address to an array adapter to show in
 				// ListView
-				mDiscoveredArrayAdapter.add(device.getName() + "\n"
-						+ device.getAddress());
-
+				mDiscoveredArrayAdapter.add(new BluetoothDeviceWrapper(device));
+				// refresh the ListView so the devices are displayed
+				mDiscoveredArrayAdapter.notifyDataSetChanged();
 			}
 		}
 	};
+
+	/*
+	 * BluetoothDevice device = null;
+	 * 
+	 * BTConnectThread mThread = new BTConnectThread(device); mThread.run();
+	 */
+
+	private class DeviceListItemClickListener implements
+			ListView.OnItemClickListener {
+
+		@SuppressWarnings("rawtypes")
+		@Override
+		public void onItemClick(AdapterView parent, View view, int position,
+				long id) {
+			Adapter mAdapter = parent.getAdapter();
+			if (mAdapter.getClass().equals(ArrayAdapter.class)) {
+				Object item = mAdapter.getItem(position);
+				if (item.getClass().equals(BluetoothDeviceWrapper.class)) {
+					BluetoothDeviceWrapper deviceWrapper = (BluetoothDeviceWrapper) item;
+					BluetoothDevice device = deviceWrapper.getDevice();
+					BTConnectThread mThread = new BTConnectThread(device);
+					mThread.run();
+				} else {
+					throw new IllegalArgumentException();
+				}
+			} else {
+				throw new IllegalArgumentException();
+			}
+		}
+
+	}
+
+	private class BluetoothDeviceWrapper {
+		private BluetoothDevice device;
+
+		public BluetoothDeviceWrapper(BluetoothDevice device) {
+			if (device != null) {
+				this.device = device;
+			} else {
+				throw new NullPointerException();
+			}
+		}
+
+		public BluetoothDevice getDevice() {
+			return device;
+		}
+
+		public String toString() {
+			return device.getName() + "\n" + device.getAddress();
+		}
+	}
+
+	private class BTConnectThread extends Thread {
+		private final BluetoothSocket mmSocket;
+		private final BluetoothDevice mmDevice;
+
+		// SPP UUID suggested by manufacturer
+		private final UUID MY_UUID = UUID
+				.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
+		public BTConnectThread(BluetoothDevice device) {
+			// Use a temporary object that is later assigned to mmSocket,
+			// because mmSocket is final
+			BluetoothSocket tmp = null;
+			mmDevice = device;
+
+			// Get a BluetoothSocket to connect with the given BluetoothDevice
+			try {
+				// MY_UUID is the app's UUID string, also used by the server
+				// code
+				tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
+			} catch (IOException e) {}
+			mmSocket = tmp;
+		}
+
+		public void run() {
+			// Cancel discovery because it will slow down the connection
+			mBluetoothAdapter.cancelDiscovery();
+
+			try {
+				// Connect the device through the socket. This will block
+				// until it succeeds or throws an exception
+				mmSocket.connect();
+			} catch (IOException connectException) {
+				// Unable to connect; close the socket and get out
+				try {
+					mmSocket.close();
+				} catch (IOException closeException) {}
+				return;
+			}
+
+			// Do work to manage the connection (in a separate thread)
+			// manageConnectedSocket(mmSocket);
+		}
+
+		/** Will cancel an in-progress connection, and close the socket */
+		public void cancel() {
+			try {
+				mmSocket.close();
+			} catch (IOException e) {}
+		}
+	}
 
 }
