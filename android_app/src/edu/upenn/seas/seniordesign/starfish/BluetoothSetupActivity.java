@@ -1,12 +1,17 @@
 package edu.upenn.seas.seniordesign.starfish;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,12 +37,18 @@ import android.content.IntentFilter;
 import android.os.Build;
 
 public class BluetoothSetupActivity extends FragmentActivity {
-	ArrayAdapter<BluetoothDeviceWrapper> mPairedArrayAdapter;
-	ArrayAdapter<BluetoothDeviceWrapper> mDiscoveredArrayAdapter;
-	BluetoothAdapter mBluetoothAdapter;
-	OnItemClickListener pairedListener;
-	OnItemClickListener discoveredListener;
+	private ArrayAdapter<BluetoothDeviceWrapper> mPairedArrayAdapter;
+	private ArrayAdapter<BluetoothDeviceWrapper> mDiscoveredArrayAdapter;
+	private ListView pairedView;
+	private ListView discoveredView;
+	private BluetoothAdapter mBluetoothAdapter;
+	private OnItemClickListener pairedListener;
+	private OnItemClickListener discoveredListener;
 	private static final int REQUEST_ENABLE_BT = 0xFF;
+
+	/***************************************************************************
+	 * lifecycle methods
+	 **************************************************************************/
 
 	@SuppressLint("NewApi")
 	@Override
@@ -49,7 +60,72 @@ public class BluetoothSetupActivity extends FragmentActivity {
 
 		// Set result CANCELED in case the user backs out
 		setResult(Activity.RESULT_CANCELED);
+	}
 
+	@Override
+	protected void onStart() {
+		super.onStart();
+		if (!this.getAdapter()) {
+			return;
+		}
+
+		// Sets ArrayAdapters for list views
+		viewSetup();
+
+		// Register the BroadcastReciever
+		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+		registerReceiver(mReceiver, filter);
+
+		// Turn on BT adapter if not already on
+		turnOnStartDiscovery();
+	}
+
+	@Override
+	protected void onStop() {
+		if (mBluetoothAdapter != null) {
+			if (mBluetoothAdapter.isDiscovering()) {
+				mBluetoothAdapter.cancelDiscovery();
+			}
+		}
+		super.onStop();
+	}
+
+	@Override
+	protected void onDestroy() {
+		unregisterReceiver(mReceiver);
+		super.onDestroy();
+	}
+
+	@Override
+	protected void onPause() {
+		if (mBluetoothAdapter != null) {
+			if (mBluetoothAdapter.isDiscovering()) {
+				mBluetoothAdapter.cancelDiscovery();
+			}
+		}
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (mBluetoothAdapter != null) {
+			if (mBluetoothAdapter.isDiscovering()) {
+				mBluetoothAdapter.cancelDiscovery();
+			}
+		}
+	}
+
+	/***************************************************************************
+	 * helpers for lifecycle methods
+	 **************************************************************************/
+
+	/**
+	 * sets mBluetoothAdapter to the default adapter
+	 * 
+	 * @return false if Bluetooth not supported by this device
+	 */
+	private boolean getAdapter() {
 		// Create bluetooth adapter
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -59,9 +135,15 @@ public class BluetoothSetupActivity extends FragmentActivity {
 			// user
 			DialogFragment newFragment = new NoBluetoothDialogFragment();
 			newFragment.show(getSupportFragmentManager(), "no_bluetooth");
-			return;
+			return false;
 		}
+		return true;
+	}
 
+	/**
+	 * sets up listViews for populated and discovered devices
+	 */
+	private void viewSetup() {
 		// Create array adapters-- One for paired, one for discovery
 		mPairedArrayAdapter = new ArrayAdapter<BluetoothDeviceWrapper>(this,
 				R.layout.list_item);
@@ -69,16 +151,18 @@ public class BluetoothSetupActivity extends FragmentActivity {
 				this, R.layout.list_item);
 
 		// Find and set up the ListView for already paired devices
-		ListView pairedView = (ListView) findViewById(R.id.paired_devices);
+		pairedView = (ListView) findViewById(R.id.paired_devices);
 		pairedListener = new DeviceListItemClickListener();
 		pairedView.setOnItemClickListener(pairedListener);
 
 		// Find and set up the ListView for newly discovered devices
-		ListView discoveredView = (ListView) findViewById(R.id.discovered_devices);
+		discoveredView = (ListView) findViewById(R.id.discovered_devices);
 		discoveredView.setAdapter(mDiscoveredArrayAdapter);
 		discoveredListener = new DeviceListItemClickListener();
 		discoveredView.setOnItemClickListener(discoveredListener);
+	}
 
+	private void populatePairedList() {
 		// Get a set of currently paired devices
 		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter
 				.getBondedDevices();
@@ -99,18 +183,6 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		}
 		// refresh the ListView so the devices are displayed
 		mPairedArrayAdapter.notifyDataSetChanged();
-
-		// Register the BroadcastReciever
-		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-		registerReceiver(mReceiver, filter);
-
-		if (!mBluetoothAdapter.isEnabled()) {
-			Intent enableBtIntent = new Intent(
-					BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-		} else {
-			bluetoothDiscovery();
-		}
 	}
 
 	private void bluetoothDiscovery() {
@@ -128,11 +200,26 @@ public class BluetoothSetupActivity extends FragmentActivity {
 
 	}
 
+	private void turnOnStartDiscovery() {
+		if (!mBluetoothAdapter.isEnabled()) {
+			Intent enableBtIntent = new Intent(
+					BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+		} else {
+			populatePairedList();
+			bluetoothDiscovery();
+		}
+	}
+
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == REQUEST_ENABLE_BT) {
 			if (resultCode == RESULT_OK) {
 				// Bluetooth was enabled
+				populatePairedList();
 				bluetoothDiscovery();
+			} else {
+				// Tell user there was an erro connecting to Bluetooth, close
+
 			}
 		}
 	}
@@ -164,11 +251,9 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		return super.onOptionsItemSelected(item);
 	}
 
-	@Override
-	protected void onDestroy() {
-		unregisterReceiver(mReceiver);
-	}
-
+	/**
+	 * Setup of broadcast receiver
+	 */
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
@@ -186,11 +271,9 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		}
 	};
 
-	/*
-	 * BluetoothDevice device = null;
-	 * 
-	 * BTConnectThread mThread = new BTConnectThread(device); mThread.run();
-	 */
+	/***************************************************************************
+	 * private classes
+	 **************************************************************************/
 
 	private class DeviceListItemClickListener implements
 			ListView.OnItemClickListener {
@@ -205,7 +288,7 @@ public class BluetoothSetupActivity extends FragmentActivity {
 				if (item.getClass().equals(BluetoothDeviceWrapper.class)) {
 					BluetoothDeviceWrapper deviceWrapper = (BluetoothDeviceWrapper) item;
 					BluetoothDevice device = deviceWrapper.getDevice();
-					BTConnectThread mThread = new BTConnectThread(device);
+					BTConnectingThread mThread = new BTConnectingThread(device);
 					mThread.run();
 				} else {
 					throw new IllegalArgumentException();
@@ -237,7 +320,7 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		}
 	}
 
-	private class BTConnectThread extends Thread {
+	private class BTConnectingThread extends Thread {
 		private final BluetoothSocket mmSocket;
 		private final BluetoothDevice mmDevice;
 
@@ -245,7 +328,7 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		private final UUID MY_UUID = UUID
 				.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-		public BTConnectThread(BluetoothDevice device) {
+		public BTConnectingThread(BluetoothDevice device) {
 			// Use a temporary object that is later assigned to mmSocket,
 			// because mmSocket is final
 			BluetoothSocket tmp = null;
@@ -287,5 +370,4 @@ public class BluetoothSetupActivity extends FragmentActivity {
 			} catch (IOException e) {}
 		}
 	}
-
 }
