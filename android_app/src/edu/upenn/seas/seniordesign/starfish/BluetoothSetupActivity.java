@@ -3,6 +3,7 @@ package edu.upenn.seas.seniordesign.starfish;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.PublicKey;
 import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Set;
@@ -12,7 +13,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.app.Activity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -272,6 +276,18 @@ public class BluetoothSetupActivity extends FragmentActivity {
 	};
 
 	/***************************************************************************
+	 * other methods
+	 **************************************************************************/
+	private void endSetupSuccessful(BluetoothSocket mmSocket) {
+		if (mmSocket == null) {
+			throw new IllegalArgumentException();
+		}
+		MainActivity.mmSocket = mmSocket;
+		setResult(MainActivity.RESULT_BT_CONNECTED);
+		finish();
+	}
+
+	/***************************************************************************
 	 * private classes
 	 **************************************************************************/
 
@@ -289,7 +305,7 @@ public class BluetoothSetupActivity extends FragmentActivity {
 					BluetoothDeviceWrapper deviceWrapper = (BluetoothDeviceWrapper) item;
 					BluetoothDevice device = deviceWrapper.getDevice();
 					BTConnectingThread mThread = new BTConnectingThread(device);
-					mThread.run();
+					mThread.start();
 				} else {
 					throw new IllegalArgumentException();
 				}
@@ -360,7 +376,7 @@ public class BluetoothSetupActivity extends FragmentActivity {
 			}
 
 			// Do work to manage the connection (in a separate thread)
-			// manageConnectedSocket(mmSocket);
+			endSetupSuccessful(mmSocket);
 		}
 
 		/** Will cancel an in-progress connection, and close the socket */
@@ -368,6 +384,7 @@ public class BluetoothSetupActivity extends FragmentActivity {
 			try {
 				mmSocket.close();
 			} catch (IOException e) {}
+			setResult(Activity.RESULT_CANCELED);
 		}
 	}
 }
