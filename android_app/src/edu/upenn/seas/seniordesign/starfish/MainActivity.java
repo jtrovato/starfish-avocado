@@ -1,10 +1,5 @@
 package edu.upenn.seas.seniordesign.starfish;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-
 import android.os.Bundle;
 import android.os.IBinder;
 import android.app.Activity;
@@ -17,7 +12,7 @@ import android.view.Menu;
 import android.view.View;
 
 public class MainActivity extends Activity {
-	private boolean isBTConnected;
+	protected boolean isBTConnected;
 	private boolean isBTServiceConnected;
 	private String deviceAddress;
 	public static final int RESULT_BT_CONNECTED = 0XFF00;
@@ -85,7 +80,7 @@ public class MainActivity extends Activity {
 	}
 
 	/**
-	 * called when user clicks the Bluetooth startbutton
+	 * called when user clicks the Bluetooth start button
 	 * 
 	 */
 	public void bluetoothStart(View view) {
@@ -95,7 +90,6 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO Auto-generated method stub
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == BT_SETUP_REQUEST) {
 			if (resultCode == RESULT_OK) {
@@ -104,7 +98,8 @@ public class MainActivity extends Activity {
 					throw new IllegalArgumentException();
 				}
 				this.deviceAddress = deviceAddress;
-				if(isBTServiceConnected){
+				if (isBTServiceConnected) {
+					mBTService.closeConnection();
 					unbindService(mConnection);
 					isBTServiceConnected = false;
 				}

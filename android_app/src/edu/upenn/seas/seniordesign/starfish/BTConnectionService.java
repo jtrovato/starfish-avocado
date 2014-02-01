@@ -5,8 +5,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.UUID;
-import android.app.Activity;
-import android.app.Application;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -22,6 +20,8 @@ import android.widget.Toast;
 public class BTConnectionService extends Service {
 	private BluetoothAdapter mBluetoothAdapter;
 	private BluetoothSocket mmSocket;
+	private BTConnectingThread mThread;
+	private BTConnectedThread mBTConnectedThread;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -43,8 +43,16 @@ public class BTConnectionService extends Service {
 		if (device == null) {
 			throw new IllegalArgumentException();
 		}
-		BTConnectingThread mThread = new BTConnectingThread(device);
+		mThread = new BTConnectingThread(device);
 		mThread.start();
+	}
+
+	public void closeConnection() {
+		if (mmSocket != null) {
+			try {
+				mmSocket.close();
+			} catch (IOException e) {}
+		}
 	}
 
 	private class ToastRunner implements Runnable {
@@ -128,13 +136,13 @@ public class BTConnectionService extends Service {
 	}
 
 	private void manageConnection() {
-		BTConnectedThread mThread = new BTConnectedThread(mmSocket);
-		mThread.start();
+		mBTConnectedThread = new BTConnectedThread(mmSocket);
+		mBTConnectedThread.start();
 		String hello = "Hello World!";
 		char[] helloArray = hello.toCharArray();
 		byte[] helloBytes = new byte[helloArray.length * 2];
 		ByteBuffer.wrap(helloBytes).asCharBuffer().put(helloArray);
-		mThread.write(helloBytes);
+		mBTConnectedThread.write(helloBytes);
 	}
 
 	private class BTConnectedThread extends Thread {
@@ -164,6 +172,9 @@ public class BTConnectionService extends Service {
 
 			// Keep listening to the InputStream until an exception occurs
 			while (true) {
+				if (Thread.interrupted()) {
+					return;
+				}
 				try {
 					// Read from the InputStream
 					bytes = mmInStream.read(buffer);
@@ -185,6 +196,12 @@ public class BTConnectionService extends Service {
 
 		/* Call this from the main activity to shutdown the connection */
 		public void cancel() {
+			if (mThread != null) {
+				mThread.interrupt();
+			}
+			if (mBTConnectedThread != null) {
+				mBTConnectedThread.interrupt();
+			}
 			try {
 				mmSocket.close();
 			} catch (IOException e) {}

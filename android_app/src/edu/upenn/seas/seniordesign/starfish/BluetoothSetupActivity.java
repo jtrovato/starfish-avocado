@@ -1,31 +1,16 @@
 package edu.upenn.seas.seniordesign.starfish;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.PublicKey;
-import java.sql.Array;
-import java.util.ArrayList;
 import java.util.Set;
-import java.util.UUID;
-
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.app.Activity;
-import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
@@ -33,7 +18,6 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -41,8 +25,8 @@ import android.content.IntentFilter;
 import android.os.Build;
 
 public class BluetoothSetupActivity extends FragmentActivity {
-	private ArrayAdapter<BluetoothDeviceWrapper> mPairedArrayAdapter;
-	private ArrayAdapter<BluetoothDeviceWrapper> mDiscoveredArrayAdapter;
+	private ArrayAdapter<String> mPairedArrayAdapter;
+	private ArrayAdapter<String> mDiscoveredArrayAdapter;
 	private ListView pairedView;
 	private ListView discoveredView;
 	private BluetoothAdapter mBluetoothAdapter;
@@ -53,7 +37,6 @@ public class BluetoothSetupActivity extends FragmentActivity {
 	/***************************************************************************
 	 * lifecycle methods
 	 **************************************************************************/
-
 	@SuppressLint("NewApi")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -149,10 +132,9 @@ public class BluetoothSetupActivity extends FragmentActivity {
 	 */
 	private void viewSetup() {
 		// Create array adapters-- One for paired, one for discovery
-		mPairedArrayAdapter = new ArrayAdapter<BluetoothDeviceWrapper>(this,
+		mPairedArrayAdapter = new ArrayAdapter<String>(this, R.layout.list_item);
+		mDiscoveredArrayAdapter = new ArrayAdapter<String>(this,
 				R.layout.list_item);
-		mDiscoveredArrayAdapter = new ArrayAdapter<BluetoothDeviceWrapper>(
-				this, R.layout.list_item);
 
 		// Find and set up the ListView for already paired devices
 		pairedView = (ListView) findViewById(R.id.paired_devices);
@@ -174,19 +156,16 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		// If there are paired devices, add each one to the ArrayAdapter
 		if (pairedDevices.size() > 0) {
 			for (BluetoothDevice device : pairedDevices) {
-				mPairedArrayAdapter.add(new BluetoothDeviceWrapper(device));
+				mPairedArrayAdapter.add(device.getName() + "\n"
+						+ device.getAddress());
 			}
 			pairedView.setAdapter(mPairedArrayAdapter);
 		} else {
 			String noDevices = getResources().getText(R.string.none_paired)
 					.toString();
-			ArrayAdapter<String> noDevicesAdapter = new ArrayAdapter<String>(
-					this, R.layout.list_item);
-			noDevicesAdapter.add(noDevices);
-			pairedView.setAdapter(noDevicesAdapter);
+			mPairedArrayAdapter.add(noDevices);
 		}
-		// refresh the ListView so the devices are displayed
-		mPairedArrayAdapter.notifyDataSetChanged();
+		pairedView.setAdapter(mPairedArrayAdapter);
 	}
 
 	private void bluetoothDiscovery() {
@@ -199,9 +178,7 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		if (mBluetoothAdapter.isDiscovering()) {
 			mBluetoothAdapter.cancelDiscovery();
 		}
-
 		mBluetoothAdapter.startDiscovery();
-
 	}
 
 	private void turnOnStartDiscovery() {
@@ -222,8 +199,10 @@ public class BluetoothSetupActivity extends FragmentActivity {
 				populatePairedList();
 				bluetoothDiscovery();
 			} else {
-				// Tell user there was an error connecting to Bluetooth, close
-
+				// Tell user there was an error enabling Bluetooth, close
+				Toast.makeText(getApplicationContext(),
+						"Bluetooth not enabled", Toast.LENGTH_SHORT).show();
+				finish();
 			}
 		}
 	}
@@ -268,7 +247,8 @@ public class BluetoothSetupActivity extends FragmentActivity {
 						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 				// Add the name and address to an array adapter to show in
 				// ListView
-				mDiscoveredArrayAdapter.add(new BluetoothDeviceWrapper(device));
+				mDiscoveredArrayAdapter.add(device.getName() + "\n"
+						+ device.getAddress());
 				// refresh the ListView so the devices are displayed
 				mDiscoveredArrayAdapter.notifyDataSetChanged();
 			}
@@ -286,52 +266,13 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		@Override
 		public void onItemClick(AdapterView parent, View view, int position,
 				long id) {
-			Adapter mAdapter = parent.getAdapter();
-			if (mAdapter.getClass().equals(ArrayAdapter.class)) {
-				Object item = mAdapter.getItem(position);
-				if (item.getClass().equals(BluetoothDeviceWrapper.class)) {
-					BluetoothDeviceWrapper deviceWrapper = (BluetoothDeviceWrapper) item;
-					BluetoothDevice device = deviceWrapper.getDevice();
-					String address = device.getAddress();
-					
-					if(address == null){
-						throw new IllegalArgumentException();
-					}
-
-					// Create intent to return
-					Intent intent = new Intent();
-					intent.putExtra(MainActivity.DEVICE_ADDRESS, address);
-
-					setResult(Activity.RESULT_OK, intent);
-					finish();
-				} else {
-					throw new IllegalArgumentException();
-				}
-			} else {
-				throw new IllegalArgumentException();
-			}
-		}
-
-	}
-
-	private class BluetoothDeviceWrapper {
-		private BluetoothDevice device;
-
-		public BluetoothDeviceWrapper(BluetoothDevice device) {
-			if (device != null) {
-				this.device = device;
-			} else {
-				throw new NullPointerException();
-			}
-		}
-
-		public BluetoothDevice getDevice() {
-			return device;
-		}
-
-		public String toString() {
-			return device.getName() + "\n" + device.getAddress();
+			// Get address, return it to MainActivity in Intent, leave
+			String info = ((TextView) view).getText().toString();
+			String address = info.substring(info.length() - 17);
+			Intent intent = new Intent();
+			intent.putExtra(MainActivity.DEVICE_ADDRESS, address);
+			setResult(Activity.RESULT_OK, intent);
+			finish();
 		}
 	}
-
 }
