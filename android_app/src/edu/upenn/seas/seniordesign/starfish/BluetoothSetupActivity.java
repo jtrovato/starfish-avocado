@@ -222,7 +222,7 @@ public class BluetoothSetupActivity extends FragmentActivity {
 				populatePairedList();
 				bluetoothDiscovery();
 			} else {
-				// Tell user there was an erro connecting to Bluetooth, close
+				// Tell user there was an error connecting to Bluetooth, close
 
 			}
 		}
@@ -276,18 +276,6 @@ public class BluetoothSetupActivity extends FragmentActivity {
 	};
 
 	/***************************************************************************
-	 * other methods
-	 **************************************************************************/
-	private void endSetupSuccessful(BluetoothSocket mmSocket) {
-		if (mmSocket == null) {
-			throw new IllegalArgumentException();
-		}
-		MainActivity.mmSocket = mmSocket;
-		setResult(MainActivity.RESULT_BT_CONNECTED);
-		finish();
-	}
-
-	/***************************************************************************
 	 * private classes
 	 **************************************************************************/
 
@@ -304,8 +292,18 @@ public class BluetoothSetupActivity extends FragmentActivity {
 				if (item.getClass().equals(BluetoothDeviceWrapper.class)) {
 					BluetoothDeviceWrapper deviceWrapper = (BluetoothDeviceWrapper) item;
 					BluetoothDevice device = deviceWrapper.getDevice();
-					BTConnectingThread mThread = new BTConnectingThread(device);
-					mThread.start();
+					String address = device.getAddress();
+					
+					if(address == null){
+						throw new IllegalArgumentException();
+					}
+
+					// Create intent to return
+					Intent intent = new Intent();
+					intent.putExtra(MainActivity.DEVICE_ADDRESS, address);
+
+					setResult(Activity.RESULT_OK, intent);
+					finish();
 				} else {
 					throw new IllegalArgumentException();
 				}
@@ -336,55 +334,4 @@ public class BluetoothSetupActivity extends FragmentActivity {
 		}
 	}
 
-	private class BTConnectingThread extends Thread {
-		private final BluetoothSocket mmSocket;
-		private final BluetoothDevice mmDevice;
-
-		// SPP UUID suggested by manufacturer
-		private final UUID MY_UUID = UUID
-				.fromString("00001101-0000-1000-8000-00805F9B34FB");
-
-		public BTConnectingThread(BluetoothDevice device) {
-			// Use a temporary object that is later assigned to mmSocket,
-			// because mmSocket is final
-			BluetoothSocket tmp = null;
-			mmDevice = device;
-
-			// Get a BluetoothSocket to connect with the given BluetoothDevice
-			try {
-				// MY_UUID is the app's UUID string, also used by the server
-				// code
-				tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
-			} catch (IOException e) {}
-			mmSocket = tmp;
-		}
-
-		public void run() {
-			// Cancel discovery because it will slow down the connection
-			mBluetoothAdapter.cancelDiscovery();
-
-			try {
-				// Connect the device through the socket. This will block
-				// until it succeeds or throws an exception
-				mmSocket.connect();
-			} catch (IOException connectException) {
-				// Unable to connect; close the socket and get out
-				try {
-					mmSocket.close();
-				} catch (IOException closeException) {}
-				return;
-			}
-
-			// Do work to manage the connection (in a separate thread)
-			endSetupSuccessful(mmSocket);
-		}
-
-		/** Will cancel an in-progress connection, and close the socket */
-		public void cancel() {
-			try {
-				mmSocket.close();
-			} catch (IOException e) {}
-			setResult(Activity.RESULT_CANCELED);
-		}
-	}
 }

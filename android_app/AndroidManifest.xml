@@ -40,6 +40,11 @@
                 android:value="edu.upenn.seas.seniordesign.starfish.MainActivity" />
         </activity>
 
+        <!-- Exported="false" prevents other apps from starting this service -->
+        <service
+            android:name=".BTConnectionService"
+            android:exported="false" >
+        </service>
         <service android:name=".timerService" />
     </application>
 
