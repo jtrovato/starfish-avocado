@@ -20,4 +20,12 @@
         android:onClick="cameraTest"
         android:text="Start Test\n(kinda)" />
 
+    <Button
+        android:id="@+id/bluetooth_start_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:onClick="bluetoothStart"
+        android:text="@string/bluetooth_start_text" />
+
 </RelativeLayout>
