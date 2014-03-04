@@ -23,5 +23,6 @@
     <!-- No Bluetooth Dialog -->
     <string name="no_bluetooth_support_message">Sorry, your device does not support a Bluetooth connection. 
         Please connect to your device using a cable.</string>
+    <string name="calibrate_screen_text">Calibration Settings</string>
 
 </resources>
