@@ -4,39 +4,18 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
+    <ListView
+        android:id="@+id/calibration_tests"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" >
+    </ListView>
+
     <Button
-        android:id="@+id/test_all"
+        android:id="@+id/test_all_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:drawableRight="@drawable/checkmark"
         android:onClick="testAll"
         android:text="@string/calibrate_button_text" />
-    
-    <Button
-        android:id="@+id/led_test"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="ledTest"
-        android:text="@string/led_test_text" />
-    
-    <Button
-        android:id="@+id/pump_test"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="pumpTest"
-        android:text="@string/pump_test_text" />
-    
-    <Button
-        android:id="@+id/heat_test"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="heatTest"
-        android:text="@string/heat_test_text" />
-    
-    <Button
-        android:id="@+id/valves_test"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="valvesTest"
-        android:text="@string/valves_test_text" />
+
 </LinearLayout>

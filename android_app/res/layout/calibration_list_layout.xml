@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+	<TextView
+	    android:id="@+id/calibration_item_label"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:gravity="center"
+	    android:textSize="10pt"
+	    android:text="@+id/calibration_item_label">
+	</TextView>
+    
+	<ImageView 
+	    android:id="@+id/passed_test_icon"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentRight="true"
+	    android:gravity="center"
+	    android:src="@drawable/crossout"/>"
+	
+</RelativeLayout>
