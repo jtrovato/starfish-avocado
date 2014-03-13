@@ -1,4 +1,4 @@
-package edu.upenn.seas.senior_design.cameratestapp;
+package edu.upenn.seas.senior_design.p2d2;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package edu.upenn.seas.senior_design.cameratestapp;
+package edu.upenn.seas.senior_design.p2d2;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import edu.upenn.seas.senior_design.p2d2.R;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
