@@ -22,7 +22,7 @@ public class HomeActivity extends Activity {
 			public void onClick(View view)
 			{
 				//start the Main Activity using an intent
-				Intent testIntent = new Intent(HomeActivity.this, MainActivity.class);
+				Intent testIntent = new Intent(HomeActivity.this, TestActivity.class);
 				//myIntent.putExtra("key", value); //to pass info if needed
 				HomeActivity.this.startActivity(testIntent);
 			}

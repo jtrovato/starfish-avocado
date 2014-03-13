@@ -12,5 +12,7 @@
     <string name="welcome">Welcome to the P2D2 device application!</string>
 	<string name="calibrateButtonLabel">Calibrate</string>
 	<string name="testButtonLabel">Test</string>
+	<string name="zoom_bar_label">Zoom</string>
+	<string name="focus_bar_label">Focus</string>
     
 </resources>

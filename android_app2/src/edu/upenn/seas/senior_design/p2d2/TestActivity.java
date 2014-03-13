@@ -11,7 +11,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import edu.upenn.seas.senior_design.p2d2.R;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -28,16 +27,24 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class MainActivity extends Activity {
+public class TestActivity extends Activity {
 
 	//image stuff
 	public static final int MEDIA_TYPE_IMAGE = 1;
 	public static final int MEDIA_TYPE_VIDEO = 2;
-	public static String TAG="Camera Test App";
+	public static String TAG="P2D2 camera";
 	private Camera mCamera;
 	private CameraPreview mPreview;
+	//image control stuff
+	Camera.Parameters parameters;
+	private SeekBar focusBar;
+	private SeekBar zoomBar;
+	
 	//timer stuff
 	private Button startButton;
 	private Button stopButton;
@@ -54,7 +61,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_test);
 		//set up timer
 		timer_value = (TextView) findViewById(R.id.timer_value);
 		startButton = (Button) findViewById(R.id.button_start);
@@ -81,17 +88,44 @@ public class MainActivity extends Activity {
 		
 		//create an instance of Camera
 		mCamera = getCameraInstance();
+		
 		//edit camera parameters (focus and zoom)
-		Camera.Parameters parameters = mCamera.getParameters(); //need a parameters object to change anything
+		parameters = mCamera.getParameters(); //need a parameters object to change anything
 		List<String> focusModes = parameters.getSupportedFocusModes(); //set focus to MACRO (close-up)
 		if(focusModes.contains(Parameters.FOCUS_MODE_MACRO))
 		{
 			parameters.setFocusMode(Parameters.FOCUS_MODE_MACRO);
 		}
 		int maxZoom = parameters.getMaxZoom();
-		parameters.setZoom((int)(0.5*maxZoom));
+		parameters.setZoom(0);
 		mCamera.setParameters(parameters);
 		mCamera.setDisplayOrientation(90); //this seems to do nothing
+		
+		//set up zoom and focus controls
+		zoomBar = (SeekBar) findViewById(R.id.seekbar_zoom);
+		zoomBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			int progressChanged = 0;
+			
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
+			{
+				progressChanged = progress;
+				int zoom = (int)(parameters.getMaxZoom()/10)*progress;
+				parameters.setZoom(zoom);
+				mCamera.setParameters(parameters);
+			}
+			public void onStartTrackingTouch(SeekBar seekBar)
+			{
+				//TODO
+			}
+			public void onStopTrackingTouch(SeekBar seekBar)
+			{
+				Toast.makeText(TestActivity.this, "seek bar progress:" + progressChanged,
+						Toast.LENGTH_SHORT).show();
+			}
+		});
+		
+		focusBar = (SeekBar) findViewById(R.id.seekbar_focus);
+		
 		//create our preview view and set it as the content of the activity
 		mPreview = new CameraPreview(this, mCamera);
 		FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
