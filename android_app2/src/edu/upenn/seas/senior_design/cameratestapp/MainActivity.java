@@ -38,6 +38,8 @@ public class MainActivity extends Activity {
 	private Camera mCamera;
 	private CameraPreview mPreview;
 	//timer stuff
+	private Button startButton;
+	private Button stopButton;
 	private TextView timer_value;
 	private long startTime = 0L;
 	private Handler customHandler = new Handler();
@@ -45,6 +47,7 @@ public class MainActivity extends Activity {
 	long timeSwapBuff = 0L;
 	long updatedTime = 0L;
 	//scheduler stuff
+	private boolean testInProgress = false;
 	private ScheduledExecutorService  scheduleTaskExecutor;
 	
 	@Override
@@ -53,8 +56,28 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		//set up timer
 		timer_value = (TextView) findViewById(R.id.timer_value);
-		startTime = SystemClock.uptimeMillis();
-		customHandler.postDelayed(updateTimerThread, 0);
+		startButton = (Button) findViewById(R.id.button_start);
+		startButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				startTime = SystemClock.uptimeMillis();
+				customHandler.postDelayed(updateTimerThread, 0);
+			    testInProgress = true;
+			}
+		});
+		
+		stopButton = (Button)findViewById(R.id.button_stop);
+		stopButton.setOnClickListener(new View.OnClickListener(){
+			@Override
+			public void onClick(View view)
+			{
+				timeSwapBuff += timeInMilliseconds;
+				customHandler.removeCallbacks(updateTimerThread);
+				testInProgress = false;
+			}
+		});
+		
 		//create an instance of Camera
 		mCamera = getCameraInstance();
 		//edit camera parameters (focus and zoom)
@@ -65,7 +88,7 @@ public class MainActivity extends Activity {
 			parameters.setFocusMode(Parameters.FOCUS_MODE_MACRO);
 		}
 		int maxZoom = parameters.getMaxZoom();
-		parameters.setZoom(maxZoom);
+		parameters.setZoom((int)(0.5*maxZoom));
 		mCamera.setParameters(parameters);
 		mCamera.setDisplayOrientation(90); //this seems to do nothing
 		//create our preview view and set it as the content of the activity
@@ -77,13 +100,16 @@ public class MainActivity extends Activity {
 		scheduleTaskExecutor.scheduleAtFixedRate(new Runnable(){
 			public void run(){
 				//the task
-				mCamera.takePicture(null, null, mPicture);
-				//update the UI if necessary
-				runOnUiThread(new Runnable() {
-					public void run() {
-						//update the UI component here
-					}
-				});
+				if(testInProgress)
+				{
+					mCamera.takePicture(null, null, mPicture);
+					//update the UI if necessary
+					runOnUiThread(new Runnable() {
+						public void run() {
+							//update the UI component here
+						}
+					});
+				}
 			}
 		}, 10, 10, TimeUnit.SECONDS);
 		//a wakelock will keep the phone from going to sleep
