@@ -100,7 +100,7 @@ public class MainActivity extends Activity {
 		scheduleTaskExecutor.scheduleAtFixedRate(new Runnable(){
 			public void run(){
 				//the task
-				if(testInProgress)
+				if(testInProgress)//causes un predictabel delayes, but not an issue
 				{
 					mCamera.takePicture(null, null, mPicture);
 					//update the UI if necessary
