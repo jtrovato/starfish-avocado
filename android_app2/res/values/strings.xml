@@ -10,9 +10,11 @@
     <string name="captureButtonLabel">Capture</string>
     <string name="title_activity_home">HomeActivity</string>
     <string name="welcome">Welcome to the P2D2 device application!</string>
-	<string name="calibrateButtonLabel">Calibrate</string>
-	<string name="testButtonLabel">Test</string>
-	<string name="zoom_bar_label">Zoom</string>
-	<string name="focus_bar_label">Focus</string>
+    <string name="calibrateButtonLabel">Calibrate</string>
+    <string name="testButtonLabel">Test</string>
+    <string name="zoom_bar_label">Zoom</string>
+    <string name="focus_bar_label">Focus</string>
+    <string name="title_activity_calibrate">CalibrateActivity</string>
+	<string name="calibrate_welcome">Let\'s Calibrate the Device!</string>
     
 </resources>

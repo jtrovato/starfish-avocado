@@ -10,6 +10,7 @@ import android.widget.Button;
 public class HomeActivity extends Activity {
 
 	private Button testButton;
+	private Button calButton;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +24,18 @@ public class HomeActivity extends Activity {
 			{
 				//start the Main Activity using an intent
 				Intent testIntent = new Intent(HomeActivity.this, TestActivity.class);
+				//myIntent.putExtra("key", value); //to pass info if needed
+				HomeActivity.this.startActivity(testIntent);
+			}
+		});
+		//calibrate button
+		calButton = (Button)findViewById(R.id.button_calibrate);
+		calButton.setOnClickListener(new View.OnClickListener(){
+			@Override
+			public void onClick(View view)
+			{
+				//start the Main Activity using an intent
+				Intent testIntent = new Intent(HomeActivity.this, CalibrateActivity.class);
 				//myIntent.putExtra("key", value); //to pass info if needed
 				HomeActivity.this.startActivity(testIntent);
 			}

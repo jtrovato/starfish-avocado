@@ -35,6 +35,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="edu.upenn.seas.senior_design.p2d2.CalibrateActivity"
+            android:label="@string/title_activity_calibrate" >
+        </activity>
     </application>
 
 </manifest>
