@@ -11,6 +11,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.opencv.android.OpenCVLoader;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -33,6 +35,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class TestActivity extends Activity {
+	
+	//static initalizer block  (runs when class is loaded)
+	static{
+		if(!OpenCVLoader.initDebug()){
+			Log.e("openCV", "error initializing OpenCV");
+		}
+	}
 
 	//image stuff
 	public static final int MEDIA_TYPE_IMAGE = 1;
