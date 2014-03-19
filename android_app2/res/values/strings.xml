@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">P2D2</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="timer_val">00:00:00</string>
+    <string name="stopButtonLabel">Stop</string>
+    <string name="startButtonLabel">Start</string>
+    <string name="captureButtonLabel">Capture</string>
+    <string name="title_activity_home">HomeActivity</string>
+    <string name="welcome">Welcome to the P2D2 device application!</string>
+    <string name="calibrateButtonLabel">Calibrate</string>
+    <string name="testButtonLabel">Test</string>
+    <string name="zoom_bar_label">Zoom</string>
+    <string name="focus_bar_label">Focus</string>
+    <string name="title_activity_calibrate">CalibrateActivity</string>
+	<string name="calibrate_welcome">Let\'s Calibrate the Device!</string>
+    
+</resources>
