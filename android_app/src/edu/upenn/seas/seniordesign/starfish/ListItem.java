@@ -1,6 +1,9 @@
 package edu.upenn.seas.seniordesign.starfish;
 
 public class ListItem {
+	
+	//fields for the name of a test, the result of a test, and the method
+	//that should be run when the item is pressed
 	private String text;
 	private boolean testResult;
 	
@@ -23,5 +26,15 @@ public class ListItem {
 	
 	public void setTestResult(boolean testResult){
 		this.testResult = testResult;
+	}
+	
+	public void doWork()
+	{
+		try{
+			testResult = !testResult;
+			Thread.sleep(2000);
+		}catch (InterruptedException e){
+			e.printStackTrace();
+		}
 	}
 }
