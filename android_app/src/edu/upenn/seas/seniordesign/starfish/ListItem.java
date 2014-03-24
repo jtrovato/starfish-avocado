@@ -28,7 +28,7 @@ public class ListItem {
 		this.testResult = testResult;
 	}
 	
-	public void doWork()
+	public boolean doWork()
 	{
 		try{
 			testResult = !testResult;
@@ -36,5 +36,7 @@ public class ListItem {
 		}catch (InterruptedException e){
 			e.printStackTrace();
 		}
+		
+		return testResult;
 	}
 }
