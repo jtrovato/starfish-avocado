@@ -48,7 +48,7 @@ void setup() {
   pinMode(heatPin,OUTPUT);
   pinMode(pumpPin,OUTPUT);
   Serial.begin(9600);
-  Serial.println("P2D2");
+  Serial.println("P2D2 PumpHeaterCode");
   // wait for MAX chip to stabilize
   delay(250); // delay 500 ms
   
@@ -89,7 +89,7 @@ void loop() {
     }
     current_error = FINAL_TEMP-temp;
     
-    if(k==0 && temp<45){
+    if(k==0 && temp<FINAL_temp-boostBuffer){
       k = 1; // this allows a one time initial power boost
       while(readTempC()<(FINAL_TEMP-boostBuffer) && readTempC()>0){
        heatPower = heatMax;
