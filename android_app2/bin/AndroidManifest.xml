@@ -39,6 +39,10 @@
             android:name="edu.upenn.seas.senior_design.p2d2.CalibrateActivity"
             android:label="@string/title_activity_calibrate" >
         </activity>
+        <activity
+            android:name="edu.upenn.seas.senior_design.p2d2.ResultsActivity"
+            android:label="@string/title_activity_results" >
+        </activity>
     </application>
 
 </manifest>

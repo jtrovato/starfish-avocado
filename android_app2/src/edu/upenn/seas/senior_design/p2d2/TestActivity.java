@@ -15,6 +15,7 @@ import org.opencv.android.OpenCVLoader;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
@@ -51,7 +52,7 @@ public class TestActivity extends Activity {
 	private CameraPreview mPreview;
 	//image control stuff
 	Camera.Parameters parameters;
-	private SeekBar focusBar;
+	private SeekBar isoBar;
 	private SeekBar zoomBar;
 	
 	//timer stuff
@@ -83,7 +84,7 @@ public class TestActivity extends Activity {
 			    testInProgress = true;
 			}
 		});
-		
+		//stopButton
 		stopButton = (Button)findViewById(R.id.button_stop);
 		stopButton.setOnClickListener(new View.OnClickListener(){
 			@Override
@@ -92,6 +93,10 @@ public class TestActivity extends Activity {
 				timeSwapBuff += timeInMilliseconds;
 				customHandler.removeCallbacks(updateTimerThread);
 				testInProgress = false;
+				//start the Results Activity using an intent
+				Intent resultsIntent = new Intent(TestActivity.this, ResultsActivity.class);
+				//myIntent.putExtra("key", value); //to pass info if needed
+				TestActivity.this.startActivity(resultsIntent);
 			}
 		});
 		
@@ -133,7 +138,7 @@ public class TestActivity extends Activity {
 			}
 		});
 		
-		focusBar = (SeekBar) findViewById(R.id.seekbar_focus);
+		isoBar = (SeekBar) findViewById(R.id.seekbar_iso);
 		
 		//create our preview view and set it as the content of the activity
 		mPreview = new CameraPreview(this, mCamera);
