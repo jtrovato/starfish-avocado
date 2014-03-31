@@ -119,7 +119,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2{
 		    // Running on something older than API level 14, so cannot lock WB or AE
 			if(!parameters.isAutoExposureLockSupported() || !parameters.isAutoWhiteBalanceLockSupported())
 			{
-				throw new RuntimeException("camera cannot be locked into manual mode");
+				Log.w("camera API", "camera cannot be locked into manual mode");
 			}
 		}
 		//parameters to be set when setting are optimized
