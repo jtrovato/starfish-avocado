@@ -10,9 +10,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import org.opencv.android.OpenCVLoader;
-
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +20,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -54,6 +54,7 @@ public class TestActivity extends Activity {
 	Camera.Parameters parameters;
 	private SeekBar isoBar;
 	private SeekBar zoomBar;
+	private SeekBar wbBar;
 	
 	//timer stuff
 	private Button startButton;
@@ -68,6 +69,7 @@ public class TestActivity extends Activity {
 	private boolean testInProgress = false;
 	private ScheduledExecutorService  scheduleTaskExecutor;
 	
+	@SuppressLint("NewApi")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -105,7 +107,17 @@ public class TestActivity extends Activity {
 		
 		//edit camera parameters (focus and zoom)
 		parameters = mCamera.getParameters(); //need a parameters object to change anything
-		//parameters.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_SHADE);
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+		    // Running on something older than API level 14, so cannot lock WB or AE
+			if(!parameters.isAutoExposureLockSupported() || !parameters.isAutoWhiteBalanceLockSupported())
+			{
+				throw new RuntimeException("camera cannot be locked into manual mode");
+			}
+		}
+		//parameters to be set when setting are optimized
+		/*parameters.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_SHADE);
+		parameters.setZoom(ideal_zoom);
+		*/
 		List<String> focusModes = parameters.getSupportedFocusModes(); //set focus to MACRO (close-up)
 		if(focusModes.contains(Parameters.FOCUS_MODE_MACRO))
 		{
@@ -118,17 +130,13 @@ public class TestActivity extends Activity {
 		//zoom settings
 		zoomBar = (SeekBar) findViewById(R.id.seekbar_zoom);
 		zoomBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			int progressChanged = 0;
 			int zoom;
 			int maxZoom;
 			
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
 				maxZoom = parameters.getMaxZoom();
-				progressChanged = progress;
 				zoom = (int)((maxZoom/30)*progress);
-				Toast toast = Toast.makeText(getApplicationContext(), "progress: " + Integer.toString(progress) + "max:" + Integer.toString(maxZoom), Toast.LENGTH_SHORT);
-				toast.show();
 				parameters.setZoom(zoom);
 				mCamera.setParameters(parameters);
 			}
@@ -146,23 +154,20 @@ public class TestActivity extends Activity {
 		//String supportedIsoValues = parameters.get("iso-values"); //this returns a null value on some devices
 		isoBar = (SeekBar) findViewById(R.id.seekbar_iso);
 		isoBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			int progressChanged = 0;
 			String iso;
 			
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
-				progressChanged = progress;
-				iso="800";
 				switch(progress){
-					case 1: iso="100";
+					case 0: iso="100";
 						break;
-					case 2: iso="200";
+					case 1: iso="200";
 						break;
-					case 3: iso="400";
+					case 2: iso="400";
 						break;
-					case 4: iso="800";
+					case 3: iso="800";
 						break;
-					case 5: iso="1600";
+					case 4: iso="1600";
 						break;
 					default: iso="800";
 						break;
@@ -180,6 +185,48 @@ public class TestActivity extends Activity {
 						Toast.LENGTH_SHORT).show();
 			}
 		});
+		//white balance settings
+		wbBar = (SeekBar) findViewById(R.id.seekbar_wb);
+		wbBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			String wb;
+			
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
+			{
+				switch(progress){
+					case 0: wb=Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT;
+						break;
+					case 1: wb=Camera.Parameters.WHITE_BALANCE_DAYLIGHT;
+						break;
+					case 2: wb=Camera.Parameters.WHITE_BALANCE_FLUORESCENT;
+						break;
+					case 3: wb=Camera.Parameters.WHITE_BALANCE_INCANDESCENT;
+						break;
+					case 4: wb=Camera.Parameters.WHITE_BALANCE_SHADE;
+						break;
+					case 5: wb=Camera.Parameters.WHITE_BALANCE_TWILIGHT;
+						break;
+					case 6: wb=Camera.Parameters.WHITE_BALANCE_WARM_FLUORESCENT;
+						break;
+					default: wb=Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT;
+						break;
+				}
+				parameters.setWhiteBalance(wb);
+				mCamera.setParameters(parameters);
+			}
+			public void onStartTrackingTouch(SeekBar seekBar)
+			{
+				//TODO
+			}
+			public void onStopTrackingTouch(SeekBar seekBar)
+			{
+				Toast.makeText(TestActivity.this, "wb:" + wb,
+						Toast.LENGTH_SHORT).show();
+			}
+		});
+
+		
+		
+		
 		
 		//create our preview view and set it as the content of the activity
 		mPreview = new CameraPreview(this, mCamera);
