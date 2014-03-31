@@ -105,25 +105,30 @@ public class TestActivity extends Activity {
 		
 		//edit camera parameters (focus and zoom)
 		parameters = mCamera.getParameters(); //need a parameters object to change anything
+		//parameters.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_SHADE);
 		List<String> focusModes = parameters.getSupportedFocusModes(); //set focus to MACRO (close-up)
 		if(focusModes.contains(Parameters.FOCUS_MODE_MACRO))
 		{
 			parameters.setFocusMode(Parameters.FOCUS_MODE_MACRO);
 		}
-		int maxZoom = parameters.getMaxZoom();
 		parameters.setZoom(0);
 		mCamera.setParameters(parameters);
 		mCamera.setDisplayOrientation(90); //this seems to do nothing
 		
-		//set up zoom and focus controls
+		//zoom settings
 		zoomBar = (SeekBar) findViewById(R.id.seekbar_zoom);
 		zoomBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			int progressChanged = 0;
+			int zoom;
+			int maxZoom;
 			
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
+				maxZoom = parameters.getMaxZoom();
 				progressChanged = progress;
-				int zoom = (int)(parameters.getMaxZoom()/10)*progress;
+				zoom = (int)((maxZoom/30)*progress);
+				Toast toast = Toast.makeText(getApplicationContext(), "progress: " + Integer.toString(progress) + "max:" + Integer.toString(maxZoom), Toast.LENGTH_SHORT);
+				toast.show();
 				parameters.setZoom(zoom);
 				mCamera.setParameters(parameters);
 			}
@@ -133,12 +138,48 @@ public class TestActivity extends Activity {
 			}
 			public void onStopTrackingTouch(SeekBar seekBar)
 			{
-				Toast.makeText(TestActivity.this, "seek bar progress:" + progressChanged,
+				Toast.makeText(TestActivity.this, "zoom:" + Integer.toString(zoom),
 						Toast.LENGTH_SHORT).show();
 			}
 		});
-		
+		//iso settings
+		//String supportedIsoValues = parameters.get("iso-values"); //this returns a null value on some devices
 		isoBar = (SeekBar) findViewById(R.id.seekbar_iso);
+		isoBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			int progressChanged = 0;
+			String iso;
+			
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
+			{
+				progressChanged = progress;
+				iso="800";
+				switch(progress){
+					case 1: iso="100";
+						break;
+					case 2: iso="200";
+						break;
+					case 3: iso="400";
+						break;
+					case 4: iso="800";
+						break;
+					case 5: iso="1600";
+						break;
+					default: iso="800";
+						break;
+				}
+				parameters.set("iso", iso);
+				mCamera.setParameters(parameters);
+			}
+			public void onStartTrackingTouch(SeekBar seekBar)
+			{
+				//TODO
+			}
+			public void onStopTrackingTouch(SeekBar seekBar)
+			{
+				Toast.makeText(TestActivity.this, "iso:" + iso,
+						Toast.LENGTH_SHORT).show();
+			}
+		});
 		
 		//create our preview view and set it as the content of the activity
 		mPreview = new CameraPreview(this, mCamera);
@@ -149,7 +190,7 @@ public class TestActivity extends Activity {
 		scheduleTaskExecutor.scheduleAtFixedRate(new Runnable(){
 			public void run(){
 				//the task
-				if(testInProgress)//causes un predictabel delayes, but not an issue
+				if(testInProgress)//causes unpredictable delays, but not an issue
 				{
 					mCamera.takePicture(null, null, mPicture);
 					//update the UI if necessary
