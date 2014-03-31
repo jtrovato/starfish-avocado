@@ -23,5 +23,12 @@
     <!-- No Bluetooth Dialog -->
     <string name="no_bluetooth_support_message">Sorry, your device does not support a Bluetooth connection. 
         Please connect to your device using a cable.</string>
+    <string name="calibrate_screen_text">Calibration Settings</string>
+    <string name="led_test_text">Test LEDs</string>
+    <string name="pump_test_text">Test Pump</string>
+    <string name="heat_test_text">Test Heat</string>
+    <string name="valves_test_text">Test Valves</string>
+    <string name="calibrate_button_text">Test All</string>
+    <string name="title_activity_calibrate_screen">Calibration Settings</string>
 
 </resources>

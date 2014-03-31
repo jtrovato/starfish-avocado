@@ -28,4 +28,12 @@
         android:onClick="bluetoothStart"
         android:text="@string/bluetooth_start_text" />
 
+    <Button
+        android:id="@+id/calibrate_screen_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/bluetooth_start_button"
+        android:onClick="calibrateScreen"
+        android:text="@string/calibrate_screen_text" />
+
 </RelativeLayout>

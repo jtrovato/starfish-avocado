@@ -88,6 +88,14 @@ public class MainActivity extends Activity {
 		startActivityForResult(intent, BT_SETUP_REQUEST);
 	}
 
+	/**
+	 * called when the user clicks the Calibrate button
+	 */
+	public void calibrateScreen(View view){
+		Intent intent = new Intent(this, CalibrateScreenActivity.class);
+		startActivity(intent);
+	}
+	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);

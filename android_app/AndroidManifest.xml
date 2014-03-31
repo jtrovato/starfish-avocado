@@ -39,7 +39,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="edu.upenn.seas.seniordesign.starfish.MainActivity" />
         </activity>
-
+		<activity
+            android:name="edu.upenn.seas.seniordesign.starfish.CalibrateScreenActivity"
+            android:label="@string/title_activity_calibrate_screen"
+            android:theme="@android:style/Theme" >"
+        </activity>
+        
         <!-- Exported="false" prevents other apps from starting this service -->
         <service
             android:name=".BTConnectionService"

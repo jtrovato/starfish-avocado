@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" 
+    android:orientation="horizontal">
+    
+	<TextView
+	    android:id="@+id/calibration_item_label"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center_vertical"
+	    android:padding="15dp"
+	    android:text="@+id/calibration_item_label"
+	    android:textSize="10pt" >
+
+	</TextView>
+    
+	<View
+	    android:layout_width="0dp" 
+	    android:layout_height="0dp"
+	    android:layout_weight="1" />
+	
+	<ImageView 
+	    android:id="@+id/passed_test_icon"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center_vertical"
+	    android:padding="15dp"
+	    android:src="@drawable/crossout"/>"
+	
+	<ProgressBar 
+	    android:id="@+id/progress_wheel_icon"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center_vertical"
+	    android:padding="5dp"
+	    android:maxHeight="10dp"
+	    android:visibility="gone"/>"
+	
+</LinearLayout>
