@@ -10,7 +10,13 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
+import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -35,7 +41,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class TestActivity extends Activity {
+public class TestActivity extends Activity implements CvCameraViewListener2{
 	
 	//static initalizer block  (runs when class is loaded)
 	static{
@@ -55,7 +61,6 @@ public class TestActivity extends Activity {
 	private SeekBar isoBar;
 	private SeekBar zoomBar;
 	private SeekBar wbBar;
-	
 	//timer stuff
 	private Button startButton;
 	private Button stopButton;
@@ -68,6 +73,9 @@ public class TestActivity extends Activity {
 	//scheduler stuff
 	private boolean testInProgress = false;
 	private ScheduledExecutorService  scheduleTaskExecutor;
+	//openCV stuff
+	private Mat mRgba;
+	private CameraBridgeViewBase mOpenCvCameraView;
 	
 	@SuppressLint("NewApi")
 	@Override
@@ -420,6 +428,24 @@ public class TestActivity extends Activity {
 	    }
 
 	    return mediaFile;
+	}
+
+	@Override
+	public void onCameraViewStarted(int width, int height) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onCameraViewStopped() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }
