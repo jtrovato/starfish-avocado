@@ -12,9 +12,9 @@
 *.settings/*
 
 # Project-Specific #
-android_app/gen/*
-android_app/bin/*
-android_app/.settings
+android_app*/gen/*
+android_app*/bin/*
+android_app*/.settings
 android_app/project.properties
 
 # Temporary Files #
