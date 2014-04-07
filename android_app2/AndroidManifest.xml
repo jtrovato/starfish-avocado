@@ -41,6 +41,10 @@
             android:name="edu.upenn.seas.senior_design.p2d2.CalibrateActivity"
             android:label="@string/title_activity_calibrate" >
         </activity>
+        <service
+            android:name=".BTConnectionService"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>

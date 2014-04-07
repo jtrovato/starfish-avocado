@@ -2,54 +2,57 @@ package edu.upenn.seas.senior_design.p2d2;
 
 
 
-import java.util.Set;
-
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.view.Gravity;
+import android.os.IBinder;
 import android.view.Menu;
 import android.view.View;
-import android.view.ViewGroup.LayoutParams;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListPopupWindow;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
 
-public class HomeActivity extends Activity {
-	private static final int REQUEST_ENABLE_BT = 0xFF;
-	
+public class HomeActivity extends Activity implements BTMenuDialogFragment.BTDialogListener {	
 	private Button testButton;
 	private Button calButton;
 	private Button btButton;
 	
-	//Bluetooth initializations
-	private BluetoothAdapter mBluetoothAdapter;
-	private ArrayAdapter<String> mBTArrayAdapter;
-	private OnItemClickListener mBTClickListener;
-	private ListView mBTListView;
-	private OnItemClickListener mBTListener;
-	private ListPopupWindow mBTPopup;
-	protected static final String DEVICE_ADDRESS = "Device address";
+	// Bluetooth Initializations
 	private String deviceAddress;
-	private View popUpView;
 	private BTMenuDialogFragment mPopup;
 	private FragmentManager newManager;
+	private boolean isBTServiceConnected;
+	private BTConnectionService mBTService;
+	private boolean mBound;
+	private static BTConnectedThread btThread;
 	
+	
+	// Defines callbacks for service binding, passed to bindService()
+	private ServiceConnection mConnection = new ServiceConnection() {
+		@Override
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			mBTService = ((BTConnectionService.LocalBinder) service)
+					.getService();
+			isBTServiceConnected = true;
+
+			if (deviceAddress == null) {
+				throw new IllegalArgumentException();
+			}
+			// Initialize and connect
+			// Call method to actually connect device
+			mBTService.connectToBT(deviceAddress);
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName arg0) {
+			isBTServiceConnected = false;
+			mBound = false;
+		}
+
+	};
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +91,17 @@ public class HomeActivity extends Activity {
 				showPopup();
 			}
 		});
+		
+		isBTServiceConnected = false;
+		mBound = false;
 	}
+	
+	@Override
+	protected void onDestroy() {
+		if(btThread != null){
+			btThread.cancel();
+		}
+	};
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -101,6 +114,33 @@ public class HomeActivity extends Activity {
 		mPopup= new BTMenuDialogFragment();
 		newManager = getFragmentManager();
 		mPopup.show(newManager, "missiles");
-		newManager.executePendingTransactions();
+		//newManager.executePendingTransactions();
 	}
+
+	@Override
+	public void onListItemClick(DialogFragment dialog, int which) {
+		BTMenuDialogFragment btDialog = (BTMenuDialogFragment)dialog;
+		String buttonText = btDialog.mBTArrayAdapter.getItem(which);
+		deviceAddress = buttonText.substring(buttonText.length() - 17);
+		if (isBTServiceConnected) {
+			mBTService.closeConnection();
+			unbindService(mConnection);
+			isBTServiceConnected = false;
+		}
+		Intent intent = new Intent(this, BTConnectionService.class);
+		mBound = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+	}
+	
+	protected static void setBTConnectedThread(BTConnectedThread thread){
+		if(thread == null){
+			throw new IllegalArgumentException();
+		}
+		btThread = thread;
+	}
+	
+	public BTConnectedThread getBTThread(){
+		return btThread;
+	}
+	
+	
 }

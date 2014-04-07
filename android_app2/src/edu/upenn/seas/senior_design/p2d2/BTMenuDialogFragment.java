@@ -1,7 +1,6 @@
 package edu.upenn.seas.senior_design.p2d2;
 
 import java.util.Set;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -22,6 +21,35 @@ public class BTMenuDialogFragment extends DialogFragment {
 	public ArrayAdapter<String> mBTArrayAdapter;
 	private static final int REQUEST_ENABLE_BT = 0xFF;
 
+	/*
+	 * The activity that creates an instance of this dialog fragment must
+	 * implement this interface in order to receive event callbacks. Each method
+	 * passes the DialogFragment in case the host needs to query it.
+	 */
+	public interface BTDialogListener {
+		public void onListItemClick(DialogFragment dialog, int which);
+	}
+
+	// Use this instance of the interface to deliver action events
+	BTDialogListener mListener;
+
+	// Override the Fragment.onAttach() method to instantiate the
+	// NoticeDialogListener
+	@Override
+	public void onAttach(Activity activity) {
+		super.onAttach(activity);
+		// Verify that the host activity implements the callback interface
+		try {
+			// Instantiate the NoticeDialogListener so we can send events to the
+			// host
+			mListener = (BTDialogListener) activity;
+		} catch (ClassCastException e) {
+			// The activity doesn't implement the interface, throw exception
+			throw new ClassCastException(activity.toString()
+					+ " must implement NoticeDialogListener");
+		}
+	}
+
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		mBTArrayAdapter = new ArrayAdapter<String>(getActivity(),
@@ -30,13 +58,13 @@ public class BTMenuDialogFragment extends DialogFragment {
 
 		if (getAdapter(getActivity())) {
 			viewSetup();
-			// Use the Builder class for convenient dialog construction			
+			// Use the Builder class for convenient dialog construction
 			builder.setTitle(R.string.bluetooth_menu_label);
+			final DialogFragment btFragment = this;
 			builder.setAdapter(mBTArrayAdapter,
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
-							// The 'which' argument contains the index position
-							// of the selected item
+							mListener.onListItemClick(btFragment, which);
 						}
 					});
 			return builder.create();
@@ -54,9 +82,6 @@ public class BTMenuDialogFragment extends DialogFragment {
 
 		// Turn on BT adapter if not already on
 		turnOnStartDiscovery();
-
-		// Find and set up the ListView for already paired devices
-		// mBTListener = new DeviceListItemClickListener();
 	}
 
 	private void populatePairedList() {
@@ -103,9 +128,9 @@ public class BTMenuDialogFragment extends DialogFragment {
 				bluetoothDiscovery();
 			} else {
 				// Tell user there was an error enabling Bluetooth, close
-				Toast.makeText(getActivity(), "Bluetooth not enabled",
+				Toast.makeText(getActivity(), "Error Enabling Bluetooth",
 						Toast.LENGTH_SHORT).show();
-				// finish();
+				this.dismiss();
 			}
 		}
 	}
@@ -155,5 +180,15 @@ public class BTMenuDialogFragment extends DialogFragment {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public void onDismiss(DialogInterface dialog) {
+		if (mBluetoothAdapter != null) {
+			if (mBluetoothAdapter.isDiscovering()) {
+				mBluetoothAdapter.cancelDiscovery();
+			}
+		}
+		super.onDismiss(dialog);
 	}
 }
