@@ -3,8 +3,6 @@ package edu.upenn.seas.senior_design.p2d2;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.UUID;
-
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -12,7 +10,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
-
 
 public class BTConnectingThread extends Thread {
 	private final BluetoothDevice mmDevice;
@@ -25,7 +22,8 @@ public class BTConnectingThread extends Thread {
 	private final UUID MY_UUID = UUID
 			.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-	public BTConnectingThread(BluetoothDevice device, BluetoothAdapter mBluetoothAdapter, Context context) {
+	public BTConnectingThread(BluetoothDevice device,
+			BluetoothAdapter mBluetoothAdapter, Context context) {
 		// Use a temporary object that is later assigned to mmSocket,
 		// because mmSocket is final
 		BluetoothSocket tmp = null;
@@ -50,10 +48,8 @@ public class BTConnectingThread extends Thread {
 		CharSequence connectionFailed = "Connection attempt failed";
 		CharSequence connectionSuccess = "Connection successful";
 		ToastRunner connectingToast = new ToastRunner(connecting);
-		ToastRunner connectionFailedToast = new ToastRunner(
-				connectionFailed);
-		ToastRunner connectionSuccessToast = new ToastRunner(
-				connectionSuccess);
+		ToastRunner connectionFailedToast = new ToastRunner(connectionFailed);
+		ToastRunner connectionSuccessToast = new ToastRunner(connectionSuccess);
 		Handler handler = new Handler(Looper.getMainLooper());
 		try {
 			// Connect the device through the socket. This will block
@@ -70,13 +66,14 @@ public class BTConnectingThread extends Thread {
 		}
 		handler.post(connectionSuccessToast);
 		// Do work to manage the connection (in a separate thread)
-		// HomeActivity.mmSocket = mmSocket;
 		manageConnection();
 	}
-	
+
 	private void manageConnection() {
+		// Create a separate thread to manage the connection
 		mBTConnectedThread = new BTConnectedThread(mmSocket, this);
 		mBTConnectedThread.start();
+
 		HomeActivity.setBTConnectedThread(mBTConnectedThread);
 		String hello = "Hello World!";
 		char[] helloArray = hello.toCharArray();
@@ -93,7 +90,7 @@ public class BTConnectingThread extends Thread {
 		// Throw some sort of error?
 		// setResult(Activity.RESULT_CANCELED);
 	}
-	
+
 	private class ToastRunner implements Runnable {
 		private CharSequence message;
 
