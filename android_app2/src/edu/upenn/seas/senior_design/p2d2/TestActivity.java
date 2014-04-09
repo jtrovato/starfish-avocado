@@ -92,6 +92,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2{
 				startTime = SystemClock.uptimeMillis();
 				customHandler.postDelayed(updateTimerThread, 0);
 			    testInProgress = true;
+			    parameters.setAutoWhiteBalanceLock(true);
 			}
 		});
 		//stopButton
@@ -117,9 +118,23 @@ public class TestActivity extends Activity implements CvCameraViewListener2{
 		parameters = mCamera.getParameters(); //need a parameters object to change anything
 		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
 		    // Running on something older than API level 14, so cannot lock WB or AE
-			if(!parameters.isAutoExposureLockSupported() || !parameters.isAutoWhiteBalanceLockSupported())
+			if(!parameters.isAutoExposureLockSupported())
 			{
-				Log.w("camera API", "camera cannot be locked into manual mode");
+				Log.w("camera Locks", "Auto Exposure Lock not Supported");
+			}
+			else
+			{
+				parameters.setAutoExposureLock(true);
+				Log.i("camera Locks", "Auto Exposure Lock enabled");
+			}
+			if(!parameters.isAutoWhiteBalanceLockSupported())
+			{
+				Log.w("camera Locks", "Auto White Balance Lock not Supported");
+			}
+			else
+			{
+				parameters.setAutoWhiteBalanceLock(true);
+				Log.i("camera Locks", "Auto White Balance Lock enabled");
 			}
 		}
 		//parameters to be set when setting are optimized
