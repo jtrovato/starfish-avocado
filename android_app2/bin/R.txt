@@ -11,12 +11,12 @@ int id button_capture 0x7f04000e
 int id button_start 0x7f04000c
 int id button_stop 0x7f04000d
 int id button_test 0x7f040004
-int id camera_preview 0x7f040005
 int id front 0x7f040002
 int id iso_bar_label 0x7f040008
 int id seekbar_iso 0x7f040009
 int id seekbar_wb 0x7f04000b
 int id seekbar_zoom 0x7f040007
+int id test_activity_java_surface_view 0x7f040005
 int id timer_value 0x7f04000f
 int id wb_bar_label 0x7f04000a
 int id zoom_bar_label 0x7f040006
