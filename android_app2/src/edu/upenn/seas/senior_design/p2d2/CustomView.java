@@ -1,6 +1,11 @@
 package edu.upenn.seas.senior_design.p2d2;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import org.opencv.android.JavaCameraView;
@@ -14,11 +19,14 @@ import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
 import android.os.Build;
+import android.os.Environment;
 import android.util.AttributeSet;
 import android.util.Log;
 
 public class CustomView extends JavaCameraView {
 
+	public static final int MEDIA_TYPE_IMAGE = 1;
+	public static final int MEDIA_TYPE_VIDEO = 2;
 	private Camera.Parameters parameters;
     private static final String TAG = "Sample::Tutorial3View";
 
@@ -85,27 +93,75 @@ public class CustomView extends JavaCameraView {
     	parameters.setWhiteBalance(wb);
     	mCamera.setParameters(parameters);//actually set the parameters
     }
-    public void takePicture(final String fileName) {
-        Log.i(TAG, "Tacking picture");
-        PictureCallback callback = new PictureCallback() {
+    public void takePicture() {
+        Log.i(TAG, "Taking picture");
+        class myCallback implements PictureCallback
+    	{
+    		public void onPictureTaken(byte[] data, Camera camera)
+    		{
+    			camera.startPreview(); //restarts the preview after taking a picture
+    			File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
+    			try {
+    				FileOutputStream fos = new FileOutputStream(pictureFile);
+    				fos.write(data);
+    				fos.close();
+    			} catch (FileNotFoundException e) {
+    				Log.d(TAG, "file not found" + e.getMessage());
+    				//e.printStackTrace();
+    			} catch (IOException e) {
+    				Log.d(TAG, "error accessing file" + e.getMessage());
+    				//e.printStackTrace();
+    			}
+    		}
+    	}
+    	myCallback mPicture = new myCallback();
 
-            private String mPictureFileName = fileName;
-
-            @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
-                Log.i(TAG, "Saving a bitmap to file");
-                Bitmap picture = BitmapFactory.decodeByteArray(data, 0, data.length);
-                try {
-                    FileOutputStream out = new FileOutputStream(mPictureFileName);
-                    picture.compress(Bitmap.CompressFormat.JPEG, 90, out);
-                    picture.recycle();
-                    mCamera.startPreview();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        mCamera.takePicture(null, null, callback);
+        mCamera.takePicture(null, null, mPicture);
     }
+    /** Create a File for saving an image or video */
+	private static File getOutputMediaFile(int type){
+	    // To be safe, you should check that the SDCard is mounted
+	    // using Environment.getExternalStorageState() before doing this.
+
+	    File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+	              Environment.DIRECTORY_PICTURES), "P2D2");
+	    // This location works best if you want the created images to be shared
+	    // between applications and persist after your app has been uninstalled.
+
+	    // Create the storage directory if it does not exist
+	    if (! mediaStorageDir.exists()){
+	        if (! mediaStorageDir.mkdirs()){
+	            Log.d("MyCameraApp", "failed to create directory");
+	            return null;
+	        }
+	    }
+
+	    // Create a media file name
+	    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+	    File mediaFile;
+	    if (type == MEDIA_TYPE_IMAGE){
+	        mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+	        "IMG_"+ timeStamp + ".jpg");
+	    } else if(type == MEDIA_TYPE_VIDEO) {
+	        mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+	        "VID_"+ timeStamp + ".mp4");
+	    } else {
+	        return null;
+	    }
+
+	    return mediaFile;
+	}
+	/*
+	 * Access the camera in a safe way
+	 */
+	public static Camera getCameraInstance()
+	{
+		Camera c = null;
+		try {
+			c = Camera.open(); //attempt to get a camera instance
+		} catch(Exception e){
+			//camera is not available
+		}
+		return c;
+	}
 }

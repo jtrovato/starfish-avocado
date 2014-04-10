@@ -9,6 +9,7 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
@@ -141,9 +142,9 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
-				//maxZoom = mOpenCvCameraView.getMaxZoom();
+				maxZoom = mOpenCvCameraView.getMaxZoom();
 				zoom = (int)((maxZoom/30)*progress);
-				//mOpenCvCameraView.setZoom(zoom);
+				mOpenCvCameraView.setZoom(zoom);
 			}
 			public void onStartTrackingTouch(SeekBar seekBar)
 			{
@@ -162,7 +163,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
-				//mOpenCvCameraView.setExposureCompensation(progress);
+				mOpenCvCameraView.setExposureCompensation(progress);
 			}
 			public void onStartTrackingTouch(SeekBar seekBar)
 			{
@@ -199,7 +200,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 					default: wb=Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT;
 						break;
 				}
-				//mOpenCvCameraView.setWhiteBalance(wb);
+				mOpenCvCameraView.setWhiteBalance(wb);
 			}
 			public void onStartTrackingTouch(SeekBar seekBar)
 			{
@@ -219,7 +220,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				//the task
 				if(testInProgress)//causes unpredictable delays, but not an issue
 				{
-					//mOpenCvCameraView.takePicture();
+					mOpenCvCameraView.takePicture();
 					//update the UI if necessary
 					runOnUiThread(new Runnable() {
 						public void run() {
@@ -235,7 +236,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			
 			@Override
 			public void onClick(View arg0) {
-				//mOpenCvCameraView.takePicture();
+				mOpenCvCameraView.takePicture();
 				
 			}
 		});
@@ -320,7 +321,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		// TODO Auto-generated method stub
 		mRgba = inputFrame.rgba();
 		Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
-		
+		Core.transpose(mGray, mGray);
 		return mGray;
 	}
 	@Override
