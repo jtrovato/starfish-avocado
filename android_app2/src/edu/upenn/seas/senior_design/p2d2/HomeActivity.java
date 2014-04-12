@@ -3,15 +3,19 @@ package edu.upenn.seas.senior_design.p2d2;
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class HomeActivity extends Activity implements
 		BTMenuDialogFragment.BTDialogListener {
@@ -29,6 +33,7 @@ public class HomeActivity extends Activity implements
 	private BTConnectionService mBTService;
 	// btThread must be static: setter method accessed from threads
 	private static BTConnectedThread btThread;
+	final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
 
 	// Defines callbacks for service binding, passed to bindService()
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -51,6 +56,36 @@ public class HomeActivity extends Activity implements
 			mBound = false;
 		}
 
+	};
+
+	private final BroadcastReceiver mBTDataReceiver = new BroadcastReceiver() {
+		public void onReceive(Context context, Intent intent) {
+			byte[] data = intent
+					.getByteArrayExtra(getString(R.string.bt_new_bytes_read));
+			if (data != null) {
+				String messagePrint = "0x" + byteToHexString(data);
+				Toast.makeText(getApplicationContext(), messagePrint,
+						Toast.LENGTH_SHORT).show();
+				return;
+			}
+			boolean shutdown = intent.getBooleanExtra(
+					getString(R.string.bt_disconnect_broadcast), false);
+			if (shutdown) {
+				unbindService(mConnection);
+			}
+		}
+	};
+
+	private final BroadcastReceiver mBTStopReceiver = new BroadcastReceiver() {
+		public void onReceive(Context context, Intent intent) {
+			byte[] data = intent
+					.getByteArrayExtra(getString(R.string.bt_new_bytes_read));
+			if (data != null) {
+				String messagePrint = "0x" + byteToHexString(data);
+				Toast.makeText(getApplicationContext(), messagePrint,
+						Toast.LENGTH_SHORT).show();
+			}
+		}
 	};
 
 	@Override
@@ -98,6 +133,7 @@ public class HomeActivity extends Activity implements
 		if (btThread != null) {
 			btThread.cancel();
 		}
+		super.onDestroy();
 	};
 
 	@Override
@@ -138,6 +174,17 @@ public class HomeActivity extends Activity implements
 		}
 		Intent intent = new Intent(this, BTConnectionService.class);
 		mBound = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+		// Register Broadcast receivers for BT Service
+		LocalBroadcastManager manager = LocalBroadcastManager
+				.getInstance(getApplicationContext());
+		// Receiver for data
+		IntentFilter dataFilter = new IntentFilter(
+				BTConnectionService.ACTION_BT_RECIEVED);
+		manager.registerReceiver(mBTDataReceiver, dataFilter);
+		// Receiver for stopping service
+		IntentFilter stopFilter = new IntentFilter(
+				BTConnectionService.ACTION_BT_STOP);
+		manager.registerReceiver(mBTDataReceiver, stopFilter);
 	}
 
 	/**
@@ -156,5 +203,18 @@ public class HomeActivity extends Activity implements
 
 	protected BTConnectedThread getBTThread() {
 		return btThread;
+	}
+
+	private String byteToHexString(byte[] data) {
+		if (data == null) {
+			throw new IllegalArgumentException();
+		}
+		char[] hexChars = new char[data.length * 2];
+		for (int i = 0; i < data.length; i++) {
+			int v = data[i] & 0xFF;
+			hexChars[i * 2] = hexArray[v >>> 4];
+			hexChars[i * 2 + 1] = hexArray[v & 0x0F];
+		}
+		return new String(hexChars);
 	}
 }
