@@ -31,8 +31,6 @@ public class HomeActivity extends Activity implements
 	private boolean mBound;
 	private String deviceAddress;
 	private BTConnectionService mBTService;
-	// btThread must be static: setter method accessed from threads
-	private static BTConnectedThread btThread;
 	final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
 
 	// Defines callbacks for service binding, passed to bindService()
@@ -130,9 +128,6 @@ public class HomeActivity extends Activity implements
 
 	@Override
 	protected void onDestroy() {
-		if (btThread != null) {
-			btThread.cancel();
-		}
 		super.onDestroy();
 	};
 
@@ -185,24 +180,6 @@ public class HomeActivity extends Activity implements
 		IntentFilter stopFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_STOP);
 		manager.registerReceiver(mBTDataReceiver, stopFilter);
-	}
-
-	/**
-	 * sets the field btThread; must be static because it is accessed by
-	 * BTConnectingThread
-	 * 
-	 * @param thread
-	 *            thread to be set as btThread
-	 */
-	protected static void setBTConnectedThread(BTConnectedThread thread) {
-		if (thread == null) {
-			throw new IllegalArgumentException();
-		}
-		btThread = thread;
-	}
-
-	protected BTConnectedThread getBTThread() {
-		return btThread;
 	}
 
 	private String byteToHexString(byte[] data) {

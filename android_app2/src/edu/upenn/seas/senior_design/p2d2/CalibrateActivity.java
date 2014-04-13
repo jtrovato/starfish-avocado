@@ -31,8 +31,6 @@ public class CalibrateActivity extends Activity {
     public static final String TAG = 
             "edu.upenn.seas.seniordesign.starfish.CalibrateScreenActivity";
     
-    private BTConnectedThread btThread;
-    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "onCreate()");
@@ -81,8 +79,6 @@ public class CalibrateActivity extends Activity {
                 new TestTask(0, true).startTest();
             }
         });
-        
-        btThread = HomeActivity.getBTThread();
     }//end of onCreate()
     
     //AsyncTask allows for test to be run off of the main Thread
@@ -184,12 +180,7 @@ public class CalibrateActivity extends Activity {
     public boolean ledTest()
     {
         Log.i(TAG, "ledTest()");
-        
-        if(btThread != null){
-            byte[] ledOn = {(byte)0xB8, (byte)0xD3, 1, (byte)0xFF};
-            btThread.write(ledOn);
-        }
-        
+
         list.get(0).setTestResult(!list.get(0).testPassed());
         
         return list.get(0).testPassed();
