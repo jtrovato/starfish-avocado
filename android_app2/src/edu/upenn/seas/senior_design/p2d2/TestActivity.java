@@ -1,40 +1,40 @@
 package edu.upenn.seas.senior_design.p2d2;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
+import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
-import android.hardware.Camera.Parameters;
-import android.hardware.Camera.PictureCallback;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MotionEvent;
+import android.view.SurfaceView;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class TestActivity extends Activity {
+public class TestActivity extends Activity implements CvCameraViewListener2, OnTouchListener{
 	
 	//static initalizer block  (runs when class is loaded)
 	static{
@@ -44,16 +44,12 @@ public class TestActivity extends Activity {
 	}
 
 	//image stuff
-	public static final int MEDIA_TYPE_IMAGE = 1;
-	public static final int MEDIA_TYPE_VIDEO = 2;
+
 	public static String TAG="P2D2 camera";
-	private Camera mCamera;
-	private CameraPreview mPreview;
 	//image control stuff
-	Camera.Parameters parameters;
-	private SeekBar focusBar;
+	private SeekBar isoBar;
 	private SeekBar zoomBar;
-	
+	private SeekBar wbBar;
 	//timer stuff
 	private Button startButton;
 	private Button stopButton;
@@ -66,13 +62,50 @@ public class TestActivity extends Activity {
 	//scheduler stuff
 	private boolean testInProgress = false;
 	private ScheduledExecutorService  scheduleTaskExecutor;
+	//openCV stuff
+	private Mat mRgba;
+	private CustomView mOpenCvCameraView;
 	
+	//constructor, necessary?
+	public TestActivity(){
+		Log.i(TAG, "Instantiated new "+this.getClass());
+	}
+	
+	//display view on screen
+	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this){
+		@Override
+		public void onManagerConnected(int status){
+			switch(status){
+			case LoaderCallbackInterface.SUCCESS:
+			{
+				Log.i(TAG, "OpenCV loaded successfully");
+				mOpenCvCameraView.enableView();
+				mOpenCvCameraView.setOnTouchListener(TestActivity.this);
+			} break;
+			default:
+			{
+				super.onManagerConnected(status);
+			}break;
+			}
+		}
+	};
+	
+	
+	@SuppressLint("NewApi")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Log.d("tracing inflation error", "about to set content view");
 		setContentView(R.layout.activity_test);
+		Log.d("tracing inflation error", "content view set");
+		mOpenCvCameraView = (CustomView)findViewById(R.id.test_activity_java_surface_view);
+		Log.d("tracing inflation error", "assigned the CameraView");
+		mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
+		mOpenCvCameraView.setCvCameraViewListener(this);
+		
 		//set up timer
 		timer_value = (TextView) findViewById(R.id.timer_value);
+		//start button
 		startButton = (Button) findViewById(R.id.button_start);
 		startButton.setOnClickListener(new View.OnClickListener() {
 			
@@ -81,9 +114,10 @@ public class TestActivity extends Activity {
 				startTime = SystemClock.uptimeMillis();
 				customHandler.postDelayed(updateTimerThread, 0);
 			    testInProgress = true;
+				
 			}
 		});
-		
+		//stopButton
 		stopButton = (Button)findViewById(R.id.button_stop);
 		stopButton.setOnClickListener(new View.OnClickListener(){
 			@Override
@@ -92,35 +126,25 @@ public class TestActivity extends Activity {
 				timeSwapBuff += timeInMilliseconds;
 				customHandler.removeCallbacks(updateTimerThread);
 				testInProgress = false;
+				//start the Results Activity using an intent
+				Intent resultsIntent = new Intent(TestActivity.this, ResultsActivity.class);
+				//myIntent.putExtra("key", value); //to pass info if needed
+				TestActivity.this.startActivity(resultsIntent);
 			}
 		});
-		
-		//create an instance of Camera
-		mCamera = getCameraInstance();
-		
-		//edit camera parameters (focus and zoom)
-		parameters = mCamera.getParameters(); //need a parameters object to change anything
-		List<String> focusModes = parameters.getSupportedFocusModes(); //set focus to MACRO (close-up)
-		if(focusModes.contains(Parameters.FOCUS_MODE_MACRO))
-		{
-			parameters.setFocusMode(Parameters.FOCUS_MODE_MACRO);
-		}
-		int maxZoom = parameters.getMaxZoom();
-		parameters.setZoom(0);
-		mCamera.setParameters(parameters);
-		mCamera.setDisplayOrientation(90); //this seems to do nothing
-		
-		//set up zoom and focus controls
+
+		//zoom settings
+		//not really necessary because it is all digital zoom, but easier to select channels
 		zoomBar = (SeekBar) findViewById(R.id.seekbar_zoom);
 		zoomBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			int progressChanged = 0;
+			int zoom;
+			int maxZoom;
 			
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
-				progressChanged = progress;
-				int zoom = (int)(parameters.getMaxZoom()/10)*progress;
-				parameters.setZoom(zoom);
-				mCamera.setParameters(parameters);
+				maxZoom = mOpenCvCameraView.getMaxZoom();
+				zoom = (int)((maxZoom/30)*progress);
+				mOpenCvCameraView.setZoom(zoom);
 			}
 			public void onStartTrackingTouch(SeekBar seekBar)
 			{
@@ -128,25 +152,75 @@ public class TestActivity extends Activity {
 			}
 			public void onStopTrackingTouch(SeekBar seekBar)
 			{
-				Toast.makeText(TestActivity.this, "seek bar progress:" + progressChanged,
+				Toast.makeText(TestActivity.this, "zoom:" + Integer.toString(zoom),
 						Toast.LENGTH_SHORT).show();
 			}
 		});
-		
-		focusBar = (SeekBar) findViewById(R.id.seekbar_focus);
-		
-		//create our preview view and set it as the content of the activity
-		mPreview = new CameraPreview(this, mCamera);
-		FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
-		preview.addView(mPreview);
+		//exposure settings
+		isoBar = (SeekBar) findViewById(R.id.seekbar_iso);
+		isoBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			String iso;
+			
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
+			{
+				mOpenCvCameraView.setExposureCompensation(progress);
+			}
+			public void onStartTrackingTouch(SeekBar seekBar)
+			{
+				//TODO
+			}
+			public void onStopTrackingTouch(SeekBar seekBar)
+			{
+				Toast.makeText(TestActivity.this, "iso:" + iso,
+						Toast.LENGTH_SHORT).show();
+			}
+		});
+		//white balance settings
+		wbBar = (SeekBar) findViewById(R.id.seekbar_wb);
+		wbBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			String wb;
+			
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
+			{
+				switch(progress){
+					case 0: wb=Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT;
+						break;
+					case 1: wb=Camera.Parameters.WHITE_BALANCE_DAYLIGHT;
+						break;
+					case 2: wb=Camera.Parameters.WHITE_BALANCE_FLUORESCENT;
+						break;
+					case 3: wb=Camera.Parameters.WHITE_BALANCE_INCANDESCENT;
+						break;
+					case 4: wb=Camera.Parameters.WHITE_BALANCE_SHADE;
+						break;
+					case 5: wb=Camera.Parameters.WHITE_BALANCE_TWILIGHT;
+						break;
+					case 6: wb=Camera.Parameters.WHITE_BALANCE_WARM_FLUORESCENT;
+						break;
+					default: wb=Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT;
+						break;
+				}
+				mOpenCvCameraView.setWhiteBalance(wb);
+			}
+			public void onStartTrackingTouch(SeekBar seekBar)
+			{
+				//TODO
+			}
+			public void onStopTrackingTouch(SeekBar seekBar)
+			{
+				Toast.makeText(TestActivity.this, "wb:" + wb,
+						Toast.LENGTH_SHORT).show();
+			}
+		});
+
 		//scheduled executor to take pictures at a certain rate.
 		scheduleTaskExecutor = Executors.newScheduledThreadPool(5);
 		scheduleTaskExecutor.scheduleAtFixedRate(new Runnable(){
 			public void run(){
 				//the task
-				if(testInProgress)//causes un predictabel delayes, but not an issue
+				if(testInProgress)//causes unpredictable delays, but not an issue
 				{
-					mCamera.takePicture(null, null, mPicture);
+					mOpenCvCameraView.takePicture();
 					//update the UI if necessary
 					runOnUiThread(new Runnable() {
 						public void run() {
@@ -156,22 +230,17 @@ public class TestActivity extends Activity {
 				}
 			}
 		}, 10, 10, TimeUnit.SECONDS);
-		//a wakelock will keep the phone from going to sleep
-		//PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		//PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
-		//wl.acquire(7200000); //keep the wake lock on for 2 hours (max test time)
-		
 		
 		Button captureButton = (Button)findViewById(R.id.button_capture);
 		captureButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View arg0) {
-				mCamera.takePicture(null, null, mPicture);
+				mOpenCvCameraView.takePicture();
 				
 			}
 		});
-	}
+	} 
 
 	//this is a worker thread for the timer
 	private Runnable updateTimerThread = new Runnable(){
@@ -195,16 +264,20 @@ public class TestActivity extends Activity {
 	protected void onPause()
 	{
 		super.onPause();
-		releaseCamera();
+		if(mOpenCvCameraView != null)
+			mOpenCvCameraView.disableView();
 	}
-	
-	private void releaseCamera()
+	@Override
+	protected void onResume()
 	{
-		if(mCamera != null)
-		{
-			mCamera.release();
-			mCamera = null;
-		}
+		super.onResume();
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_5,  this, mLoaderCallback);
+	}
+	public void onDestroy()
+	{
+		super.onDestroy();
+		if(mOpenCvCameraView != null)
+			mOpenCvCameraView.disableView();
 	}
 	
 	@Override
@@ -229,104 +302,32 @@ public class TestActivity extends Activity {
 			return false;
 		}
 	}
-	/*
-	 * Access the camera in a safe way
-	 */
-	public static Camera getCameraInstance()
-	{
-		Camera c = null;
-		try {
-			c = Camera.open(); //attempt to get a camera instance
-		} catch(Exception e){
-			//camera is not available
-		}
-		return c;
-	}
-	class myCallback implements PictureCallback
-	{
-		public void onPictureTaken(byte[] data, Camera camera)
-		{
-			camera.startPreview(); //restarts the preview after taking a picture
-			File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
-			try {
-				FileOutputStream fos = new FileOutputStream(pictureFile);
-				fos.write(data);
-				fos.close();
-			} catch (FileNotFoundException e) {
-				Log.d(TAG, "file not found" + e.getMessage());
-				//e.printStackTrace();
-			} catch (IOException e) {
-				Log.d(TAG, "error accessing file" + e.getMessage());
-				//e.printStackTrace();
-			}
-		}
-	}
-	private myCallback mPicture = new myCallback();
-	
-	/*
-	private PictureCallback mPicture = new PictureCallback() {
+
+	@Override
+	public void onCameraViewStarted(int width, int height) {
+		mGray = new Mat();
+		mRgba = new Mat();
 		
-		@Override
-		public void onPictureTaken(byte[] data, Camera camera)
-		{
-			
-			File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
-			if(pictureFile == null)
-			{
-				Log.d(TAG, "Error creating media file, check storage permissions: ");
-				return;
-			}
-			//cannot get android to resolve the exceptions
-			
-			try {
-				FileOutputStream fos = new FileOutputStream(pictureFile);
-				fos.write(data);
-				fos.close();
-			} catch(FileNotFoundExecption e){
-				Log.d(TAG, "File not found: " + e.getMessage());
-			} catch(IOExecption e){
-				Log.d(TAG, "Error accessing file: " + e.getMessage());
-			}
-		}
-	};
-	
-	/** Create a file Uri for saving an image or video */
-	private static Uri getOutputMediaFileUri(int type){
-	      return Uri.fromFile(getOutputMediaFile(type));
 	}
 
-	/** Create a File for saving an image or video */
-	private static File getOutputMediaFile(int type){
-	    // To be safe, you should check that the SDCard is mounted
-	    // using Environment.getExternalStorageState() before doing this.
+	@Override
+	public void onCameraViewStopped() {
+		
+	}
 
-	    File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-	              Environment.DIRECTORY_PICTURES), "P2D2");
-	    // This location works best if you want the created images to be shared
-	    // between applications and persist after your app has been uninstalled.
-
-	    // Create the storage directory if it does not exist
-	    if (! mediaStorageDir.exists()){
-	        if (! mediaStorageDir.mkdirs()){
-	            Log.d("MyCameraApp", "failed to create directory");
-	            return null;
-	        }
-	    }
-
-	    // Create a media file name
-	    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-	    File mediaFile;
-	    if (type == MEDIA_TYPE_IMAGE){
-	        mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-	        "IMG_"+ timeStamp + ".jpg");
-	    } else if(type == MEDIA_TYPE_VIDEO) {
-	        mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-	        "VID_"+ timeStamp + ".mp4");
-	    } else {
-	        return null;
-	    }
-
-	    return mediaFile;
+	private Mat mGray;
+	@Override
+	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
+		// TODO Auto-generated method stub
+		mRgba = inputFrame.rgba();
+		Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
+		Core.transpose(mGray, mGray);
+		return mGray;
+	}
+	@Override
+	public boolean onTouch(View arg0, MotionEvent arg1) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 	
 }

@@ -13,8 +13,10 @@
     <string name="calibrateButtonLabel">Calibrate</string>
     <string name="testButtonLabel">Test</string>
     <string name="zoom_bar_label">Zoom</string>
-    <string name="focus_bar_label">Focus</string>
+    <string name="iso_bar_label">ISO</string>
     <string name="title_activity_calibrate">CalibrateActivity</string>
-	<string name="calibrate_welcome">Let\'s Calibrate the Device!</string>
-    
+    <string name="calibrate_welcome">Let\'s Calibrate the Device!</string>
+    <string name="title_activity_results">ResultsActivity</string>
+	<string name="results_welcome">Please process images on computer, mobile image processing is in the works</string>
+    <string name="wb_bar_label">White Balance</string>
 </resources>
