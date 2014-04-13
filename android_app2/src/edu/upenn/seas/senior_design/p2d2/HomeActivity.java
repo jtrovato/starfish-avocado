@@ -1,35 +1,40 @@
 package edu.upenn.seas.senior_design.p2d2;
 
-
-
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
-public class HomeActivity extends Activity implements BTMenuDialogFragment.BTDialogListener {	
+public class HomeActivity extends Activity implements
+		BTMenuDialogFragment.BTDialogListener {
+	// Button initializations
 	private Button testButton;
 	private Button calButton;
 	private Button btButton;
-	
+
 	// Bluetooth Initializations
-	private String deviceAddress;
 	private BTMenuDialogFragment mPopup;
 	private FragmentManager newManager;
 	private boolean isBTServiceConnected;
-	private BTConnectionService mBTService;
 	private boolean mBound;
+	private String deviceAddress;
+	private BTConnectionService mBTService;
+	// btThread must be static: setter method accessed from threads
 	private static BTConnectedThread btThread;
-	
-	
+	final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
+
 	// Defines callbacks for service binding, passed to bindService()
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
@@ -42,7 +47,6 @@ public class HomeActivity extends Activity implements BTMenuDialogFragment.BTDia
 				throw new IllegalArgumentException();
 			}
 			// Initialize and connect
-			// Call method to actually connect device
 			mBTService.connectToBT(deviceAddress);
 		}
 
@@ -53,54 +57,83 @@ public class HomeActivity extends Activity implements BTMenuDialogFragment.BTDia
 		}
 
 	};
-	
+
+	private final BroadcastReceiver mBTDataReceiver = new BroadcastReceiver() {
+		public void onReceive(Context context, Intent intent) {
+			byte[] data = intent
+					.getByteArrayExtra(getString(R.string.bt_new_bytes_read));
+			if (data != null) {
+				String messagePrint = "0x" + byteToHexString(data);
+				Toast.makeText(getApplicationContext(), messagePrint,
+						Toast.LENGTH_SHORT).show();
+				return;
+			}
+			boolean shutdown = intent.getBooleanExtra(
+					getString(R.string.bt_disconnect_broadcast), false);
+			if (shutdown) {
+				unbindService(mConnection);
+			}
+		}
+	};
+
+	private final BroadcastReceiver mBTStopReceiver = new BroadcastReceiver() {
+		public void onReceive(Context context, Intent intent) {
+			byte[] data = intent
+					.getByteArrayExtra(getString(R.string.bt_new_bytes_read));
+			if (data != null) {
+				String messagePrint = "0x" + byteToHexString(data);
+				Toast.makeText(getApplicationContext(), messagePrint,
+						Toast.LENGTH_SHORT).show();
+			}
+		}
+	};
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_home);
-		//test button
-		testButton = (Button)findViewById(R.id.button_test);
-		testButton.setOnClickListener(new View.OnClickListener(){
+		// test button
+		testButton = (Button) findViewById(R.id.button_test);
+		testButton.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void onClick(View view)
-			{
-				//start the Test Activity using an intent
-				Intent testIntent = new Intent(HomeActivity.this, TestActivity.class);
-				//myIntent.putExtra("key", value); //to pass info if needed
+			public void onClick(View view) {
+				// start the Test Activity using an intent
+				Intent testIntent = new Intent(HomeActivity.this,
+						TestActivity.class);
+				// myIntent.putExtra("key", value); //to pass info if needed
 				HomeActivity.this.startActivity(testIntent);
 			}
 		});
-		//calibrate button
-		calButton = (Button)findViewById(R.id.button_calibrate);
-		calButton.setOnClickListener(new View.OnClickListener(){
+		// calibrate button
+		calButton = (Button) findViewById(R.id.button_calibrate);
+		calButton.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void onClick(View view)
-			{
-				//start the Calibrate Activity using an intent
-				Intent testIntent = new Intent(HomeActivity.this, CalibrateActivity.class);
-				//myIntent.putExtra("key", value); //to pass info if needed
+			public void onClick(View view) {
+				// start the Calibrate Activity using an intent
+				Intent testIntent = new Intent(HomeActivity.this,
+						CalibrateActivity.class);
+				// myIntent.putExtra("key", value); //to pass info if needed
 				HomeActivity.this.startActivity(testIntent);
 			}
 		});
-		//Bluetooth setup button
-		btButton = (Button)findViewById(R.id.button_bluetooth);
-		btButton.setOnClickListener(new View.OnClickListener(){
+		// Bluetooth setup button
+		btButton = (Button) findViewById(R.id.button_bluetooth);
+		btButton.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void onClick(View view)
-			{
+			public void onClick(View view) {
 				showPopup();
 			}
 		});
-		
 		isBTServiceConnected = false;
 		mBound = false;
 	}
-	
+
 	@Override
 	protected void onDestroy() {
-		if(btThread != null){
+		if (btThread != null) {
 			btThread.cancel();
 		}
+		super.onDestroy();
 	};
 
 	@Override
@@ -109,17 +142,29 @@ public class HomeActivity extends Activity implements BTMenuDialogFragment.BTDia
 		getMenuInflater().inflate(R.menu.home, menu);
 		return true;
 	}
-	
-	private void showPopup(){
-		mPopup= new BTMenuDialogFragment();
+
+	/**
+	 * shows dialog which allows user to choose which BT device to connect to
+	 */
+	private void showPopup() {
+		mPopup = new BTMenuDialogFragment();
 		newManager = getFragmentManager();
 		mPopup.show(newManager, "missiles");
-		//newManager.executePendingTransactions();
 	}
 
+	/**
+	 * implements interface BTDialogListener in BTMenuDialogFragment; connects
+	 * to the device selected by the user in the bluetooth selection pop-up
+	 * dialog
+	 * 
+	 * @param dialog
+	 *            The dialog which was clicked
+	 * @param which
+	 *            The position of the list item which was clicked
+	 */
 	@Override
 	public void onListItemClick(DialogFragment dialog, int which) {
-		BTMenuDialogFragment btDialog = (BTMenuDialogFragment)dialog;
+		BTMenuDialogFragment btDialog = (BTMenuDialogFragment) dialog;
 		String buttonText = btDialog.mBTArrayAdapter.getItem(which);
 		deviceAddress = buttonText.substring(buttonText.length() - 17);
 		if (isBTServiceConnected) {
@@ -129,18 +174,47 @@ public class HomeActivity extends Activity implements BTMenuDialogFragment.BTDia
 		}
 		Intent intent = new Intent(this, BTConnectionService.class);
 		mBound = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+		// Register Broadcast receivers for BT Service
+		LocalBroadcastManager manager = LocalBroadcastManager
+				.getInstance(getApplicationContext());
+		// Receiver for data
+		IntentFilter dataFilter = new IntentFilter(
+				BTConnectionService.ACTION_BT_RECIEVED);
+		manager.registerReceiver(mBTDataReceiver, dataFilter);
+		// Receiver for stopping service
+		IntentFilter stopFilter = new IntentFilter(
+				BTConnectionService.ACTION_BT_STOP);
+		manager.registerReceiver(mBTDataReceiver, stopFilter);
 	}
-	
-	protected static void setBTConnectedThread(BTConnectedThread thread){
-		if(thread == null){
+
+	/**
+	 * sets the field btThread; must be static because it is accessed by
+	 * BTConnectingThread
+	 * 
+	 * @param thread
+	 *            thread to be set as btThread
+	 */
+	protected static void setBTConnectedThread(BTConnectedThread thread) {
+		if (thread == null) {
 			throw new IllegalArgumentException();
 		}
 		btThread = thread;
 	}
-	
-	public static BTConnectedThread getBTThread(){
+
+	protected BTConnectedThread getBTThread() {
 		return btThread;
 	}
-	
-	
+
+	private String byteToHexString(byte[] data) {
+		if (data == null) {
+			throw new IllegalArgumentException();
+		}
+		char[] hexChars = new char[data.length * 2];
+		for (int i = 0; i < data.length; i++) {
+			int v = data[i] & 0xFF;
+			hexChars[i * 2] = hexArray[v >>> 4];
+			hexChars[i * 2 + 1] = hexArray[v & 0x0F];
+		}
+		return new String(hexChars);
+	}
 }

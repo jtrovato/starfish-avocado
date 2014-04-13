@@ -19,6 +19,8 @@
 	<string name="calibrate_welcome">Let\'s Calibrate the Device!</string>
 	<string name="no_bluetooth">Device incompatible (Bluetooth unsupported)</string>
 	<string name="bluetooth_menu_label">Select a device</string>
+	<string name="bt_disconnect_broadcast">DISCONNECT</string>
+	<string name="bt_new_bytes_read">INCOMNIG MESSAGE</string>
     
 	<string name="calibrate_screen_text">Calibration Settings</string>
     <string name="led_test_text">Test LEDs</string>
