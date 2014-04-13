@@ -4,7 +4,10 @@ import java.util.ArrayList;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.ServiceConnection;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -31,6 +34,31 @@ public class CalibrateActivity extends Activity {
     public static final String TAG = 
             "edu.upenn.seas.seniordesign.starfish.CalibrateScreenActivity";
     
+    private BTConnectionService mBTService;
+    
+    // Defines callbacks for service binding, passed to bindService()
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            mBTService = ((BTConnectionService.LocalBinder) service)
+                    .getService();
+            
+            if(mBTService == null){
+                Toast.makeText(getApplicationContext(), "Bluetooth not connected", Toast.LENGTH_SHORT).show();
+                //close activity
+            }
+            else if(!mBTService.isConnected()){
+                Toast.makeText(getApplicationContext(), "Bluetooth not connected", Toast.LENGTH_SHORT).show();
+                //close activity
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            //unused
+        }
+    };
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "onCreate()");
@@ -44,7 +72,7 @@ public class CalibrateActivity extends Activity {
         //String values for the calibration tests that are done
         //Note: Find a way to move string values to string res
         String[] values = new String[]
-                {"Test LEDs", "Test Pump", "Test Heat", "Test Valves"};
+                {"Test LEDs", "Test Pump", "Test Heat"};
         
         //constructing the ArrayList of ListItems that hold data for the test
         //results. ListItems are processed inside ActionArrayAdapter
@@ -79,6 +107,8 @@ public class CalibrateActivity extends Activity {
                 new TestTask(0, true).startTest();
             }
         });
+        
+        
     }//end of onCreate()
     
     //AsyncTask allows for test to be run off of the main Thread
@@ -170,8 +200,6 @@ public class CalibrateActivity extends Activity {
                     break;
             case 2: result = heatTest();
                     break;
-            case 3: result = valvesTest();
-                    break;
             default: break;
         }
         return result;
@@ -179,7 +207,8 @@ public class CalibrateActivity extends Activity {
     
     public boolean ledTest()
     {
-        Log.i(TAG, "ledTest()");
+        byte[] bytes = {(byte)0xB8, (byte)0xD3, (byte)0x01, (byte)0x3C, (byte)0xFF};
+        mBTService.writeToBT(bytes);
 
         list.get(0).setTestResult(!list.get(0).testPassed());
         
@@ -188,13 +217,8 @@ public class CalibrateActivity extends Activity {
     
     public boolean pumpTest()
     {
-        Log.i(TAG, "pumpTest()");
-        
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        byte[] bytes = {(byte)0xB8, (byte)0xD3, (byte)0x01, (byte)0x8F, (byte)0xFF};
+        mBTService.writeToBT(bytes);
         
         list.get(1).setTestResult(!list.get(1).testPassed());
         
@@ -203,31 +227,11 @@ public class CalibrateActivity extends Activity {
     
     public boolean heatTest()
     {
-        Log.i(TAG, "heatTest()");
-        
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        byte[] bytes = {(byte)0xB8, (byte)0xD3, (byte)0x01, (byte)0x57, (byte)0x33};
+        mBTService.writeToBT(bytes);
         
         list.get(2).setTestResult(!list.get(2).testPassed());
         
         return list.get(2).testPassed();
-    }
-    
-    public boolean valvesTest()
-    {
-        Log.i(TAG, "valvesTest()");
-        
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        list.get(3).setTestResult(!list.get(3).testPassed());
-        
-        return list.get(3).testPassed();
     }
 }

@@ -32,6 +32,8 @@ public class BTConnectionService extends Service {
 	private final UUID MY_UUID = UUID
 			.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
+	private boolean isConnected = false; 
+	
 	@Override
 	public IBinder onBind(Intent intent) {
 		return mBinder;
@@ -71,6 +73,7 @@ public class BTConnectionService extends Service {
 			try {
 				mmSocket.close();
 			} catch (IOException e) {}
+			isConnected = false;
 		}
 	}
 
@@ -120,11 +123,13 @@ public class BTConnectionService extends Service {
 				// Unable to connect; close the socket and get out
 				try {
 					publishProgress(connectionFailed);
+					isConnected = false;
 					mmSocket.close();
 				} catch (IOException closeException) {}
 				return false;
 			}
 			publishProgress(connectionSuccess);
+			isConnected = true;
 			return true;
 		}
 
@@ -188,5 +193,9 @@ public class BTConnectionService extends Service {
 		public void execute(Runnable command) {
 			new Thread(command).start();
 		}
+	}
+	
+	public boolean isConnected(){
+	    return isConnected;
 	}
 }
