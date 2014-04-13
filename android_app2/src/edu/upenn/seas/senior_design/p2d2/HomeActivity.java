@@ -138,7 +138,7 @@ public class HomeActivity extends Activity implements BTMenuDialogFragment.BTDia
 		btThread = thread;
 	}
 	
-	public BTConnectedThread getBTThread(){
+	public static BTConnectedThread getBTThread(){
 		return btThread;
 	}
 	
