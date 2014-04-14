@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.content.ServiceConnection;
 import android.util.Log;
 import android.view.Menu;
@@ -108,7 +110,8 @@ public class CalibrateActivity extends Activity {
             }
         });
         
-        
+        Intent intent = new Intent(this, BTConnectionService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }//end of onCreate()
     
     //AsyncTask allows for test to be run off of the main Thread
@@ -208,6 +211,11 @@ public class CalibrateActivity extends Activity {
     public boolean ledTest()
     {
         byte[] bytes = {(byte)0xB8, (byte)0xD3, (byte)0x01, (byte)0x3C, (byte)0xFF};
+        
+        if(list.get(0).testPassed()){
+            bytes[4] = (byte)0x00;
+        }
+        
         mBTService.writeToBT(bytes);
 
         list.get(0).setTestResult(!list.get(0).testPassed());
@@ -218,6 +226,11 @@ public class CalibrateActivity extends Activity {
     public boolean pumpTest()
     {
         byte[] bytes = {(byte)0xB8, (byte)0xD3, (byte)0x01, (byte)0x8F, (byte)0xFF};
+        
+        if(list.get(1).testPassed()){
+            bytes[4] = (byte)0x00;
+        }
+        
         mBTService.writeToBT(bytes);
         
         list.get(1).setTestResult(!list.get(1).testPassed());
@@ -228,6 +241,11 @@ public class CalibrateActivity extends Activity {
     public boolean heatTest()
     {
         byte[] bytes = {(byte)0xB8, (byte)0xD3, (byte)0x01, (byte)0x57, (byte)0x33};
+        
+        if(list.get(2).testPassed()){
+            bytes[4] = (byte)0x00;
+        }
+        
         mBTService.writeToBT(bytes);
         
         list.get(2).setTestResult(!list.get(2).testPassed());
