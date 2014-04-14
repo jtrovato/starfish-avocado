@@ -3,7 +3,7 @@ int attr show_fps 0x7f010000
 int dimen activity_horizontal_margin 0x7f050000
 int dimen activity_vertical_margin 0x7f050001
 int drawable ic_launcher 0x7f020000
-int id action_settings 0x7f040011
+int id action_settings 0x7f040010
 int id any 0x7f040000
 int id back 0x7f040001
 int id button_calibrate 0x7f040003
@@ -18,14 +18,12 @@ int id seekbar_wb 0x7f04000b
 int id seekbar_zoom 0x7f040007
 int id test_activity_java_surface_view 0x7f040005
 int id timer_value 0x7f04000f
-int id tutorial3_activity_java_surface_view 0x7f040010
 int id wb_bar_label 0x7f04000a
 int id zoom_bar_label 0x7f040006
 int layout activity_calibrate 0x7f030000
 int layout activity_home 0x7f030001
 int layout activity_results 0x7f030002
 int layout activity_test 0x7f030003
-int layout tutorial3_surface_view 0x7f030004
 int menu calibrate 0x7f080000
 int menu home 0x7f080001
 int menu main 0x7f080002

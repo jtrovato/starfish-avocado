@@ -9,9 +9,13 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.imgproc.*;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -27,8 +31,8 @@ import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.View.OnTouchListener;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
@@ -68,6 +72,12 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	private Mat mGray;
 	private Mat mRgbaT;
 	private CustomView mOpenCvCameraView;
+	private Rect ROI;
+	private Point[] points = new Point[8];
+	private MatOfPoint cal_points;
+	private int x;
+	private int y;
+	private int touch_count = 0;
 	
 	//constructor, necessary?
 	public TestActivity(){
@@ -319,20 +329,56 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		
 	}
 
+	private Rect testR;
 	@Override
 	/* this method should only be used for displaying real time images */
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-		// TODO Auto-generated method stub
+		//note: Mat.t() has a memory leak (o causes the app to crash in some other way)
 		mRgba = inputFrame.rgba();
-		Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
-		//mRgbaT = mRgba.t();
-		//Core.flip(mRgba.t(), mRgbaT, 1);
-		//Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
+		//Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
+		if(touch_count > 8)
+			Core.rectangle(mRgba, ROI.tl(),ROI.br(),new Scalar( 255, 0, 0 ),4,8, 0 );
+
 		return mRgba;
 	}
+	
+	
+	
 	@Override
-	public boolean onTouch(View arg0, MotionEvent arg1) {
-		// TODO Auto-generated method stub
+	/* this method is executed every time the user touches the screen.camera view */
+	public boolean onTouch(View arg0, MotionEvent event) {
+		double cols = mRgba.cols();
+		double rows = mRgba.rows();
+
+		double xOffset = (mOpenCvCameraView.getWidth() - cols) / 2;
+		double yOffset = (mOpenCvCameraView.getHeight() - rows) / 2;
+		x = (int)((event).getX() - xOffset);
+		y = (int)((event).getY() - yOffset);
+		
+		
+		if(touch_count > 8)
+		{
+			
+		}
+		else if(touch_count == 8)
+		{
+			cal_points = new MatOfPoint();
+			cal_points.fromArray(points);
+			ROI = Imgproc.boundingRect(cal_points);
+			
+		} else {
+			points[touch_count] = new Point(x,y);
+		}
+		
+		x = (int)((event).getX() - xOffset);
+		y = (int)((event).getY() - yOffset);
+		
+		testR = new Rect(x-100, y-100, x+100, y+100);
+		Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
+
+		
+		touch_count++;
+		
 		return false;
 	}
 	
