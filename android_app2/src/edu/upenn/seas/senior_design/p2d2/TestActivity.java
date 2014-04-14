@@ -82,6 +82,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	private int y;
 	private int touch_count = 0;
 	private ArrayList<Rect> channels = new ArrayList<Rect>();
+	ArrayList<Mat> rgb_channels = new ArrayList<Mat>();
 	
 	//constructor, necessary?
 	public TestActivity(){
@@ -336,8 +337,12 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	@Override
 	/* this method should only be used for displaying real time images */
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-		//note: Mat.t() has a memory leak (o causes the app to crash in some other way)
+		//note: Mat.t() and Core.split() has a memory leak (causes the app to crash in some other way)
 		mRgba = inputFrame.rgba();
+		for(Mat m : rgb_channels)
+		{
+			m.release();
+		}
 		//Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
 		if(touch_count > 8)
 			Core.rectangle(mRgba, ROI.tl(),ROI.br(),new Scalar( 255, 0, 0 ),4,8, 0 );
@@ -345,8 +350,8 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			{
 				Core.rectangle(mRgba, c.tl(), c.br(), new Scalar( 0, 255, 0 ),2,8, 0 );
 			}
-
-		return mRgba;
+		Core.split(mRgba, rgb_channels);
+		return rgb_channels.get(1);
 	}
 	
 	
