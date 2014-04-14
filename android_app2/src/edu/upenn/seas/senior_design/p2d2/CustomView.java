@@ -33,7 +33,7 @@ public class CustomView extends JavaCameraView {
     public CustomView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
-
+    
     @SuppressLint("NewApi")
 	public void lockCamera(){
     	parameters = mCamera.getParameters();

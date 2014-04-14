@@ -338,20 +338,36 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	/* this method should only be used for displaying real time images */
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
 		//note: Mat.t() and Core.split() has a memory leak (causes the app to crash in some other way)
-		mRgba = inputFrame.rgba();
+		//UPDATE: fixed the memory leaks by releasing the Mats used in this function but the app still crashes after a few seconds.	
+		mRgba.release();
+		mRgbaT.release();
 		for(Mat m : rgb_channels)
 		{
 			m.release();
 		}
+		mRgba = inputFrame.rgba();
+		//rotate view
+		//mRgbaT = mRgba.t();
+		//Core.flip(mRgba.t(), mRgbaT, 1);
+		//Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
 		//Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
+		Core.split(mRgba, rgb_channels);
+		Mat ch_g = rgb_channels.get(1);
+		
+		
 		if(touch_count > 8)
+		{
+			double[] fluo = ImageProc.getFluorescence(mRgba, channels);
+			Log.i("fluorescence values", Double.toString(fluo[0]));
 			Core.rectangle(mRgba, ROI.tl(),ROI.br(),new Scalar( 255, 0, 0 ),4,8, 0 );
 			for(Rect c : channels)
 			{
 				Core.rectangle(mRgba, c.tl(), c.br(), new Scalar( 0, 255, 0 ),2,8, 0 );
 			}
-		Core.split(mRgba, rgb_channels);
-		return rgb_channels.get(1);
+		}
+		
+		//return rgb_channels.get(1); //display the green channel
+		return mRgba;
 	}
 	
 	

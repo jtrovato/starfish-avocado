@@ -2,24 +2,29 @@ package edu.upenn.seas.senior_design.p2d2;
 
 import java.util.ArrayList;
 
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 
 public class ImageProc {
 	
-	public static int[] getFluorescence(Mat inputIm,  ArrayList<Mat> channels)
+	public static double[] getFluorescence(Mat inputIm,  ArrayList<Rect> channels)
 	{
-
-		int[] fluo = new int[channels.size()];
-		for(Mat im : channels)
+		Scalar temp_scalar;
+		double[] fluo = new double[channels.size()];
+		for(int i =0; i<3;i++)
 		{
-			
+			Mat ch = inputIm.submat(channels.get(i)); //get a mat of the channels area
+			temp_scalar = Core.sumElems(ch);
+			fluo[i] = temp_scalar.val[0];
 		}
 		
 		return fluo;
 	}
+	
 	/* this function uses the dimension of the cassette to exactly localize the channels */
 	public static ArrayList<Rect> findChannels(Rect ROI)
 	{
