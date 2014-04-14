@@ -1,5 +1,6 @@
 package edu.upenn.seas.senior_design.p2d2;
 
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -9,13 +10,13 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.imgproc.*;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -38,6 +39,8 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import edu.upenn.seas.senior_design.p2d2.*;
 
 public class TestActivity extends Activity implements CvCameraViewListener2, OnTouchListener{
 	
@@ -78,6 +81,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	private int x;
 	private int y;
 	private int touch_count = 0;
+	private ArrayList<Rect> channels = new ArrayList<Rect>();
 	
 	//constructor, necessary?
 	public TestActivity(){
@@ -329,7 +333,6 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		
 	}
 
-	private Rect testR;
 	@Override
 	/* this method should only be used for displaying real time images */
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
@@ -338,6 +341,10 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		//Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
 		if(touch_count > 8)
 			Core.rectangle(mRgba, ROI.tl(),ROI.br(),new Scalar( 255, 0, 0 ),4,8, 0 );
+			for(Rect c : channels)
+			{
+				Core.rectangle(mRgba, c.tl(), c.br(), new Scalar( 0, 255, 0 ),2,8, 0 );
+			}
 
 		return mRgba;
 	}
@@ -365,6 +372,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			cal_points = new MatOfPoint();
 			cal_points.fromArray(points);
 			ROI = Imgproc.boundingRect(cal_points);
+			channels = ImageProc.findChannels(ROI);
 			
 		} else {
 			points[touch_count] = new Point(x,y);
@@ -373,7 +381,6 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		x = (int)((event).getX() - xOffset);
 		y = (int)((event).getY() - yOffset);
 		
-		testR = new Rect(x-100, y-100, x+100, y+100);
 		Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
 
 		
