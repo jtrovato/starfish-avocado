@@ -67,8 +67,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	private Mat mRgba;
 	private Mat mGray;
 	private Mat mRgbaT;
-	//private CustomView mOpenCvCameraView;
-	private Tutorial3View mOpenCvCameraView;
+	private CustomView mOpenCvCameraView;
 	
 	//constructor, necessary?
 	public TestActivity(){
@@ -104,11 +103,10 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		super.onCreate(savedInstanceState);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		setContentView(R.layout.tutorial3_surface_view);
-		mOpenCvCameraView = (Tutorial3View)findViewById(R.id.test_activity_java_surface_view);
+		setContentView(R.layout.activity_test);
+		mOpenCvCameraView = (CustomView)findViewById(R.id.test_activity_java_surface_view);
 		mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 		mOpenCvCameraView.setCvCameraViewListener(this);
-		/*
 		//set up timer
 		timer_value = (TextView) findViewById(R.id.timer_value);
 		//start button
@@ -245,7 +243,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				mOpenCvCameraView.takePicture();
 				
 			}
-		});*/
+		});
 	} 
 
 	//this is a worker thread for the timer
