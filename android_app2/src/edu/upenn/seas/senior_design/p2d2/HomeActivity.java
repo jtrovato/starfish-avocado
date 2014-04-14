@@ -58,30 +58,37 @@ public class HomeActivity extends Activity implements
 
 	private final BroadcastReceiver mBTDataReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
-			byte[] data = intent
-					.getByteArrayExtra(getString(R.string.bt_new_bytes_read));
-			if (data != null) {
-				String messagePrint = "0x" + byteToHexString(data);
-				Toast.makeText(getApplicationContext(), messagePrint,
-						Toast.LENGTH_SHORT).show();
+			String stringExtra = intent.getStringExtra(getString(R.string.bt_data_type));
+			if(stringExtra == null){
+				Toast.makeText(getApplicationContext(), "Null type", Toast.LENGTH_SHORT).show();
 				return;
 			}
-			boolean shutdown = intent.getBooleanExtra(
-					getString(R.string.bt_disconnect_broadcast), false);
-			if (shutdown) {
-				unbindService(mConnection);
+			if (stringExtra.equals(getString(R.string.bt_error))) {
+				//process error
+				Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
+			} else if (stringExtra.equals(getString(R.string.bt_fluid_state))){
+				// process fluid state
+				Toast.makeText(getApplicationContext(), "Fluid State", Toast.LENGTH_SHORT).show();
+			}else if (stringExtra.equals(getString(R.string.bt_heating_state))){
+				// process heating state
+				Toast.makeText(getApplicationContext(), "Heating State", Toast.LENGTH_SHORT).show();
+			}else if (stringExtra.equals(getString(R.string.bt_led_state))){
+				// process led state
+				Toast.makeText(getApplicationContext(), "LED State", Toast.LENGTH_SHORT).show();
+			}
+			else if (stringExtra.equals(getString(R.string.bt_temp_data))){
+				// process temp data
+				Toast.makeText(getApplicationContext(), "Temp Data", Toast.LENGTH_SHORT).show();
 			}
 		}
 	};
 
 	private final BroadcastReceiver mBTStopReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
-			byte[] data = intent
-					.getByteArrayExtra(getString(R.string.bt_new_bytes_read));
-			if (data != null) {
-				String messagePrint = "0x" + byteToHexString(data);
-				Toast.makeText(getApplicationContext(), messagePrint,
-						Toast.LENGTH_SHORT).show();
+			boolean shutdown = intent.getBooleanExtra(
+					getString(R.string.bt_disconnect_broadcast), false);
+			if (shutdown) {
+				unbindService(mConnection);
 			}
 		}
 	};
@@ -180,18 +187,5 @@ public class HomeActivity extends Activity implements
 		IntentFilter stopFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_STOP);
 		manager.registerReceiver(mBTDataReceiver, stopFilter);
-	}
-
-	private String byteToHexString(byte[] data) {
-		if (data == null) {
-			throw new IllegalArgumentException();
-		}
-		char[] hexChars = new char[data.length * 2];
-		for (int i = 0; i < data.length; i++) {
-			int v = data[i] & 0xFF;
-			hexChars[i * 2] = hexArray[v >>> 4];
-			hexChars[i * 2 + 1] = hexArray[v & 0x0F];
-		}
-		return new String(hexChars);
 	}
 }

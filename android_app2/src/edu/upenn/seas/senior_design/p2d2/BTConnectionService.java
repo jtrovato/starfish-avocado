@@ -16,6 +16,7 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.widget.Toast;
 
 public class BTConnectionService extends Service {
@@ -26,14 +27,14 @@ public class BTConnectionService extends Service {
 	private BluetoothDevice device;
 	private InputStream mmInStream;
 	private OutputStream mmOutStream;
-	private int minPacketSize = 3; //minimum number of bytes in a packet
+	private int minPacketSize = 5; // minimum number of bytes in a packet
 
 	// SPP UUID suggested by manufacturer
 	private final UUID MY_UUID = UUID
 			.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-	private boolean isConnected = false; 
-	
+	private boolean isConnected = false;
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		return mBinder;
@@ -164,18 +165,11 @@ public class BTConnectionService extends Service {
 				try {
 					// Read from the InputStream
 					numBytes = mmInStream.available();
-					if (numBytes > minPacketSize) {
+					if (numBytes >= minPacketSize) {
 						numBytes = mmInStream.read(buffer);
-						// Send the obtained bytes to the UI activity
 						if (numBytes > 0) {
-							byte[] data = Arrays.copyOfRange(buffer, 0,
-									numBytes);
-							Intent intent = new Intent(ACTION_BT_RECIEVED);
-							intent.putExtra(
-									getString(R.string.bt_new_bytes_read), data);
-							LocalBroadcastManager manager = LocalBroadcastManager
-									.getInstance(getApplicationContext());
-							manager.sendBroadcast(intent);
+							// process the obtained bytes
+							processBuffer(buffer, numBytes);
 						} else if (numBytes < 0) {
 							break;
 						}
@@ -184,8 +178,110 @@ public class BTConnectionService extends Service {
 					break;
 				}
 			}
+			manageConnection();
 		}
 
+		private void processBuffer(byte[] buffer, int numBytes) {
+			if (buffer[0] == (byte) 0xFA) {
+				if (buffer[1] == (byte) 0xCE) {
+					int length = (int) buffer[2];
+					int start = 3;
+					for (int i = 0; i < length; i++) {
+						if (numBytes < start) {
+							int temp = numBytes;
+							numBytes = checkForMore(buffer, numBytes);
+							if (numBytes <= temp) {
+								Log.e(BLUETOOTH_SERVICE,
+										"Packet not fully received from device");
+								return;
+							}
+						}
+						int delta = processTag(buffer, start, numBytes);
+						if (delta >= 2) {
+							start += delta;
+						} else {
+							// bad packet
+							Log.e(BLUETOOTH_SERVICE,
+									"Error receiving packet from device");
+							return;
+						}
+					}
+				}
+			}
+		}
+
+		private int checkForMore(byte[] buffer, int numBytes) {
+			try {
+				int additional;
+				// Read from the InputStream
+				additional = mmInStream.available();
+				if (additional > 0) {
+					additional = mmInStream.read(buffer, numBytes,
+							buffer.length - numBytes);
+					if (additional > 0) {
+						numBytes += additional;
+					}
+				}
+			} catch (IOException e) {} finally {
+				return numBytes;
+			}
+		}
+
+		private int processTag(byte[] buffer, int start, int numBytes) {
+			LocalBroadcastManager manager = LocalBroadcastManager
+					.getInstance(getApplicationContext());
+			Intent intent = new Intent(ACTION_BT_RECIEVED);
+			int delta = -1;
+			switch (buffer[start]) {
+			case (byte) 0x6A:
+				if (numBytes < start) {
+					int temp = numBytes;
+					numBytes = checkForMore(buffer, numBytes);
+					if (numBytes <= temp) {
+						Toast.makeText(getApplicationContext(),
+								"Packet not fully receieved",
+								Toast.LENGTH_SHORT).show();
+						return delta;
+					}
+				}
+				// process temperature data; 2 bytes
+				intent.putExtra(getString(R.string.bt_data_type),
+						getString(R.string.bt_temp_data));
+				intent.putExtra(getString(R.string.bt_data_2),
+						buffer[start + 2]);
+				delta = 3;
+				break;
+			case (byte) 0x57:
+				// process heating state; 1 byte
+				intent.putExtra(getString(R.string.bt_data_type),
+						getString(R.string.bt_heating_state));
+				delta = 2;
+				break;
+			case (byte) 0x3C:
+				// process LED state; 1 byte
+				intent.putExtra(getString(R.string.bt_data_type),
+						getString(R.string.bt_led_state));
+				delta = 2;
+				break;
+			case (byte) 0x8F:
+				// process fluid actuation state; 1 byte
+				intent.putExtra(getString(R.string.bt_data_type),
+						getString(R.string.bt_fluid_state));
+				delta = 2;
+				break;
+			case (byte) 0xEE:
+				// process error message; 1 byte
+				intent.putExtra(getString(R.string.bt_data_type),
+						getString(R.string.bt_error));
+				delta = 2;
+				break;
+			default:
+				return delta;
+			}
+			intent.putExtra(getString(R.string.bt_data_1), buffer[start + 1]);
+			manager.sendBroadcast(intent);
+			return delta;
+		}
 	}
 
 	private class BTExecutor implements Executor {
@@ -194,8 +290,8 @@ public class BTConnectionService extends Service {
 			new Thread(command).start();
 		}
 	}
-	
-	public boolean isConnected(){
-	    return isConnected;
+
+	public boolean isConnected() {
+		return isConnected;
 	}
 }
