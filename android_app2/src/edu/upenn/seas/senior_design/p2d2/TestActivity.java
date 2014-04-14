@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -64,6 +65,8 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	private ScheduledExecutorService  scheduleTaskExecutor;
 	//openCV stuff
 	private Mat mRgba;
+	private Mat mGray;
+	private Mat mRgbaT;
 	private CustomView mOpenCvCameraView;
 	
 	//constructor, necessary?
@@ -78,6 +81,9 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			switch(status){
 			case LoaderCallbackInterface.SUCCESS:
 			{
+				mRgba = new Mat();
+				mGray = new Mat();
+				mRgbaT = new Mat();
 				Log.i(TAG, "OpenCV loaded successfully");
 				mOpenCvCameraView.enableView();
 				mOpenCvCameraView.setOnTouchListener(TestActivity.this);
@@ -95,14 +101,12 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.d("tracing inflation error", "about to set content view");
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_test);
-		Log.d("tracing inflation error", "content view set");
 		mOpenCvCameraView = (CustomView)findViewById(R.id.test_activity_java_surface_view);
-		Log.d("tracing inflation error", "assigned the CameraView");
 		mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 		mOpenCvCameraView.setCvCameraViewListener(this);
-		
 		//set up timer
 		timer_value = (TextView) findViewById(R.id.timer_value);
 		//start button
@@ -315,14 +319,16 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		
 	}
 
-	private Mat mGray;
 	@Override
+	/* this method should only be used for displaying real time images */
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
 		// TODO Auto-generated method stub
 		mRgba = inputFrame.rgba();
 		Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
-		Core.transpose(mGray, mGray);
-		return mGray;
+		//mRgbaT = mRgba.t();
+		//Core.flip(mRgba.t(), mRgbaT, 1);
+		//Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
+		return mRgba;
 	}
 	@Override
 	public boolean onTouch(View arg0, MotionEvent arg1) {

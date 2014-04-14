@@ -13,7 +13,7 @@
     <string name="calibrateButtonLabel">Calibrate</string>
     <string name="testButtonLabel">Test</string>
     <string name="zoom_bar_label">Zoom</string>
-    <string name="iso_bar_label">ISO</string>
+    <string name="iso_bar_label">Exposure</string>
     <string name="title_activity_calibrate">CalibrateActivity</string>
     <string name="calibrate_welcome">Let\'s Calibrate the Device!</string>
     <string name="title_activity_results">ResultsActivity</string>
