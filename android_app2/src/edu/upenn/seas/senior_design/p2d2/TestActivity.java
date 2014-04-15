@@ -1,5 +1,6 @@
 package edu.upenn.seas.senior_design.p2d2;
 
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -11,6 +12,10 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import android.annotation.SuppressLint;
@@ -23,12 +28,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.View.OnTouchListener;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
@@ -68,6 +74,14 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	private Mat mGray;
 	private Mat mRgbaT;
 	private CustomView mOpenCvCameraView;
+	private Rect ROI;
+	private Point[] points = new Point[8];
+	private MatOfPoint cal_points;
+	private int x;
+	private int y;
+	private int touch_count = 0;
+	private ArrayList<Rect> channels = new ArrayList<Rect>();
+	ArrayList<Mat> rgb_channels = new ArrayList<Mat>();
 	
 	//constructor, necessary?
 	public TestActivity(){
@@ -109,6 +123,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		mOpenCvCameraView.setCvCameraViewListener(this);
 		//set up timer
 		timer_value = (TextView) findViewById(R.id.timer_value);
+		
 		//start button
 		startButton = (Button) findViewById(R.id.button_start);
 		startButton.setOnClickListener(new View.OnClickListener() {
@@ -118,6 +133,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				startTime = SystemClock.uptimeMillis();
 				customHandler.postDelayed(updateTimerThread, 0);
 			    testInProgress = true;
+			    mOpenCvCameraView.lockCamera(); //enable AWB and AE lock
 				
 			}
 		});
@@ -167,7 +183,9 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
-				mOpenCvCameraView.setExposureCompensation(progress);
+				
+				mOpenCvCameraView.setExposureCompensation(progress); //may need to actually figure out what acceptable value for this are.
+				iso=Integer.toString(progress);
 			}
 			public void onStartTrackingTouch(SeekBar seekBar)
 			{
@@ -234,7 +252,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				}
 			}
 		}, 10, 10, TimeUnit.SECONDS);
-		
+		//capture button
 		Button captureButton = (Button)findViewById(R.id.button_capture);
 		captureButton.setOnClickListener(new View.OnClickListener() {
 			
@@ -244,6 +262,13 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				
 			}
 		});
+		
+		//calibration instructions
+		Toast inst_toast = Toast.makeText(TestActivity.this, "Select three points in each channel to calibrate",
+				Toast.LENGTH_LONG);
+		inst_toast.setGravity(Gravity.TOP, 0, 0);
+		inst_toast.show();
+		
 	} 
 
 	//this is a worker thread for the timer
@@ -322,17 +347,85 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	@Override
 	/* this method should only be used for displaying real time images */
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-		// TODO Auto-generated method stub
+		//note: Mat.t() and Core.split() has a memory leak (causes the app to crash in some other way)
+		//UPDATE: fixed the memory leaks by releasing the Mats used in this function but the app still crashes after a few seconds.	
+		mRgba.release();
+		mRgbaT.release();
+		for(Mat m : rgb_channels)
+		{
+			m.release();
+		}
 		mRgba = inputFrame.rgba();
-		Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
+		//rotate view
 		//mRgbaT = mRgba.t();
 		//Core.flip(mRgba.t(), mRgbaT, 1);
 		//Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
+		//Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
+		Core.split(mRgba, rgb_channels);
+		Mat ch_g = rgb_channels.get(1);
+		
+		
+		if(touch_count > 8)
+		{
+			double[] fluo = ImageProc.getFluorescence(mRgba, channels);
+			int i =0;
+			Log.i("fluorescence values", Double.toString(fluo[0]) + " " + Double.toString(fluo[1]) + " " + Double.toString(fluo[2]));
+			//outline ROI and Channels
+			Core.rectangle(mRgba, ROI.tl(),ROI.br(),new Scalar( 255, 0, 0 ),4,8, 0 );
+			for(Rect c : channels)
+			{
+				Core.rectangle(mRgba, c.tl(), c.br(), new Scalar( 0, 255, 0 ),2,8, 0 );
+				Core.putText(mRgba, Integer.toString((int)fluo[i]), new Point(c.x - c.width*(0.09/(2*0.04))  , c.y + c.height + 20), 
+					    Core.FONT_HERSHEY_COMPLEX, 0.8, new Scalar(200,200,250), 1);
+				i++;
+			}
+			//display fluo text
+			
+			
+			
+		}
+		
+		//return rgb_channels.get(1); //display the green channel
 		return mRgba;
 	}
+	
+	
+	
 	@Override
-	public boolean onTouch(View arg0, MotionEvent arg1) {
-		// TODO Auto-generated method stub
+	/* this method is executed every time the user touches the screen.camera view */
+	public boolean onTouch(View arg0, MotionEvent event) {
+		double cols = mRgba.cols();
+		double rows = mRgba.rows();
+
+		double xOffset = (mOpenCvCameraView.getWidth() - cols) / 2;
+		double yOffset = (mOpenCvCameraView.getHeight() - rows) / 2;
+		x = (int)((event).getX() - xOffset);
+		y = (int)((event).getY() - yOffset);
+		
+		
+		if(touch_count > 8)
+		{
+			
+		}
+		else if(touch_count == 8)
+		{
+			cal_points = new MatOfPoint();
+			cal_points.fromArray(points);
+			ROI = Imgproc.boundingRect(cal_points);
+			channels = ImageProc.findChannels(ROI);
+			
+		} else {
+			points[touch_count] = new Point(x,y);
+		}
+		
+		x = (int)((event).getX() - xOffset);
+		y = (int)((event).getY() - yOffset);
+		
+		Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
+
+		
+		touch_count++;
+		
 		return false;
 	}
 	

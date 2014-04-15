@@ -33,7 +33,7 @@ public class CustomView extends JavaCameraView {
     public CustomView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
-
+    
     @SuppressLint("NewApi")
 	public void lockCamera(){
     	parameters = mCamera.getParameters();
@@ -62,6 +62,7 @@ public class CustomView extends JavaCameraView {
     }
 
     public void setMacroFocus(){
+    	parameters = mCamera.getParameters();
 		List<String> focusModes = parameters.getSupportedFocusModes(); //set focus to MACRO (close-up)
 		if(focusModes.contains(Parameters.FOCUS_MODE_MACRO))
 		{
@@ -75,13 +76,21 @@ public class CustomView extends JavaCameraView {
     	mCamera.setParameters(parameters);//actually set the parameters
     }
     public int getMaxZoom(){
+    	parameters = mCamera.getParameters();
     	return parameters.getMaxZoom();
     }
     public void setExposureCompensation(int ec){
     	//this method assumes that ec is value 0 to 4 corresponding to ec values of -2 to 2
-    	int actual_ec = ec - 2;
+    	parameters = mCamera.getParameters();
+    	int max_ec = parameters.getMaxExposureCompensation();
+    	int min_ec = parameters.getMinExposureCompensation();
+    	Log.d("exposure comp", "exposure compensation must be between " + Integer.toString(parameters.getMinExposureCompensation())
+				+ "and" + Integer.toString(parameters.getMaxExposureCompensation()) );
+    	//int range = 24;
+    	int actual_ec = ec - 12;
     	if(actual_ec < parameters.getMaxExposureCompensation() && actual_ec > parameters.getMinExposureCompensation()){
     		parameters.setExposureCompensation(actual_ec);
+    		Log.d("exposure comp", "exposure set to " + Integer.toString(actual_ec));
     	}else{
     		parameters.setExposureCompensation(0);
     		Log.e("exposure comp", "exposure compensation must be between " + Integer.toString(parameters.getMinExposureCompensation())

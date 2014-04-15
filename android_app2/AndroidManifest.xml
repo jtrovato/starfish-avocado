@@ -5,10 +5,12 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="11"
         android:targetSdkVersion="18" />
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 
 	   	<uses-feature
 	        android:name="android.hardware.camera"
@@ -43,6 +45,10 @@
             android:name="edu.upenn.seas.senior_design.p2d2.ResultsActivity"
             android:label="@string/title_activity_results" >
         </activity>
+        <service
+            android:name=".BTConnectionService"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>

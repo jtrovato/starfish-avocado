@@ -12,11 +12,33 @@
     <string name="welcome">Welcome to the P2D2 device application!</string>
     <string name="calibrateButtonLabel">Calibrate</string>
     <string name="testButtonLabel">Test</string>
+    <string name="bluetoothButtonLabel">Connect to Bluetooth</string>
     <string name="zoom_bar_label">Zoom</string>
     <string name="iso_bar_label">Exposure</string>
     <string name="title_activity_calibrate">CalibrateActivity</string>
-    <string name="calibrate_welcome">Let\'s Calibrate the Device!</string>
     <string name="title_activity_results">ResultsActivity</string>
 	<string name="results_welcome">Please process images on computer, mobile image processing is in the works</string>
     <string name="wb_bar_label">White Balance</string>
+	<string name="calibrate_welcome">Let\'s Calibrate the Device!</string>
+	<string name="no_bluetooth">Device incompatible (Bluetooth unsupported)</string>
+	<string name="bluetooth_menu_label">Select a device</string>  
+	<string name="calibrate_screen_text">Calibration Settings</string>
+    <string name="led_test_text">Test LEDs</string>
+    <string name="pump_test_text">Test Pump</string>
+    <string name="heat_test_text">Test Heat</string>
+    <string name="valves_test_text">Test Valves</string>
+    <string name="calibrate_button_text">Test All</string>
+    <string name="title_activity_calibrate_screen">Calibration Settings</string>
+    
+    <!-- Bluetooth broadcast strings -->
+	<string name="bt_disconnect_broadcast">DISCONNECT</string>
+	<string name="bt_data_type">TYPE</string>
+	<string name="bt_temp_data">TEMP DATA</string>
+	<string name="bt_led_state">LED STATE</string>
+	<string name="bt_heating_state">HEATING STATE</string>
+	<string name="bt_fluid_state">FLUID STATE</string>
+	<string name="bt_error">ERROR</string>
+	<string name="bt_data_1">DATA 1</string>
+	<string name="bt_data_2">DATA 2</string>
+	
 </resources>
