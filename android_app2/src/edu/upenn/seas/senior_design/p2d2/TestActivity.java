@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
@@ -251,7 +252,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				}
 			}
 		}, 10, 10, TimeUnit.SECONDS);
-		
+		//capture button
 		Button captureButton = (Button)findViewById(R.id.button_capture);
 		captureButton.setOnClickListener(new View.OnClickListener() {
 			
@@ -261,6 +262,13 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				
 			}
 		});
+		
+		//calibration instructions
+		Toast inst_toast = Toast.makeText(TestActivity.this, "Select three points in each channel to calibrate",
+				Toast.LENGTH_LONG);
+		inst_toast.setGravity(Gravity.TOP, 0, 0);
+		inst_toast.show();
+		
 	} 
 
 	//this is a worker thread for the timer
