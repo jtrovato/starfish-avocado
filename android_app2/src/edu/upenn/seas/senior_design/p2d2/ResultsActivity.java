@@ -2,10 +2,7 @@ package edu.upenn.seas.senior_design.p2d2;
 
 import android.os.Bundle;
 import android.app.Activity;
-import android.content.Intent;
 import android.view.Menu;
-import android.view.View;
-import android.widget.Button;
 
 public class ResultsActivity extends Activity {
 

@@ -12,12 +12,9 @@ import org.opencv.android.JavaCameraView;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
-import android.hardware.Camera.Size;
 import android.os.Build;
 import android.os.Environment;
 import android.util.AttributeSet;
@@ -106,7 +103,8 @@ public class CustomView extends JavaCameraView {
         Log.i(TAG, "Taking picture");
         class myCallback implements PictureCallback
     	{
-    		public void onPictureTaken(byte[] data, Camera camera)
+    		@Override
+			public void onPictureTaken(byte[] data, Camera camera)
     		{
     			camera.startPreview(); //restarts the preview after taking a picture
     			File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);

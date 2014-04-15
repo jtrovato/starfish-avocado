@@ -119,7 +119,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_test);
 		mOpenCvCameraView = (CustomView)findViewById(R.id.test_activity_java_surface_view);
-		mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
+		mOpenCvCameraView.setVisibility(View.VISIBLE);
 		mOpenCvCameraView.setCvCameraViewListener(this);
 		//set up timer
 		timer_value = (TextView) findViewById(R.id.timer_value);
@@ -160,16 +160,19 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			int zoom;
 			int maxZoom;
 			
+			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
 				maxZoom = mOpenCvCameraView.getMaxZoom();
-				zoom = (int)((maxZoom/30)*progress);
+				zoom = (maxZoom/30)*progress;
 				mOpenCvCameraView.setZoom(zoom);
 			}
+			@Override
 			public void onStartTrackingTouch(SeekBar seekBar)
 			{
 				//TODO
 			}
+			@Override
 			public void onStopTrackingTouch(SeekBar seekBar)
 			{
 				Toast.makeText(TestActivity.this, "zoom:" + Integer.toString(zoom),
@@ -181,16 +184,19 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		isoBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			String iso;
 			
+			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
 				
 				mOpenCvCameraView.setExposureCompensation(progress); //may need to actually figure out what acceptable value for this are.
 				iso=Integer.toString(progress);
 			}
+			@Override
 			public void onStartTrackingTouch(SeekBar seekBar)
 			{
 				//TODO
 			}
+			@Override
 			public void onStopTrackingTouch(SeekBar seekBar)
 			{
 				Toast.makeText(TestActivity.this, "iso:" + iso,
@@ -202,6 +208,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		wbBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			String wb;
 			
+			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
 				switch(progress){
@@ -224,10 +231,12 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				}
 				mOpenCvCameraView.setWhiteBalance(wb);
 			}
+			@Override
 			public void onStartTrackingTouch(SeekBar seekBar)
 			{
 				//TODO
 			}
+			@Override
 			public void onStopTrackingTouch(SeekBar seekBar)
 			{
 				Toast.makeText(TestActivity.this, "wb:" + wb,
@@ -238,6 +247,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		//scheduled executor to take pictures at a certain rate.
 		scheduleTaskExecutor = Executors.newScheduledThreadPool(5);
 		scheduleTaskExecutor.scheduleAtFixedRate(new Runnable(){
+			@Override
 			public void run(){
 				//the task
 				if(testInProgress)//causes unpredictable delays, but not an issue
@@ -245,6 +255,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 					mOpenCvCameraView.takePicture();
 					//update the UI if necessary
 					runOnUiThread(new Runnable() {
+						@Override
 						public void run() {
 							//update the UI component here
 						}
@@ -273,6 +284,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 
 	//this is a worker thread for the timer
 	private Runnable updateTimerThread = new Runnable(){
+		@Override
 		public void run(){
 			timeInMilliseconds = SystemClock.uptimeMillis() - startTime;
 			updatedTime = timeSwapBuff + timeInMilliseconds;
@@ -302,6 +314,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		super.onResume();
 		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_5,  this, mLoaderCallback);
 	}
+	@Override
 	public void onDestroy()
 	{
 		super.onDestroy();

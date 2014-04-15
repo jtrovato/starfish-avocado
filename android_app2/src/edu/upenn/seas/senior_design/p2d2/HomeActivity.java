@@ -57,6 +57,7 @@ public class HomeActivity extends Activity implements
 	};
 
 	private final BroadcastReceiver mBTDataReceiver = new BroadcastReceiver() {
+		@Override
 		public void onReceive(Context context, Intent intent) {
 			String stringExtra = intent.getStringExtra(getString(R.string.bt_data_type));
 			if(stringExtra == null){
@@ -84,6 +85,7 @@ public class HomeActivity extends Activity implements
 	};
 
 	private final BroadcastReceiver mBTStopReceiver = new BroadcastReceiver() {
+		@Override
 		public void onReceive(Context context, Intent intent) {
 			boolean shutdown = intent.getBooleanExtra(
 					getString(R.string.bt_disconnect_broadcast), false);
