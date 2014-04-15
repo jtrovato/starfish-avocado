@@ -62,6 +62,7 @@ public class CustomView extends JavaCameraView {
     }
 
     public void setMacroFocus(){
+    	parameters = mCamera.getParameters();
 		List<String> focusModes = parameters.getSupportedFocusModes(); //set focus to MACRO (close-up)
 		if(focusModes.contains(Parameters.FOCUS_MODE_MACRO))
 		{
@@ -75,10 +76,12 @@ public class CustomView extends JavaCameraView {
     	mCamera.setParameters(parameters);//actually set the parameters
     }
     public int getMaxZoom(){
+    	parameters = mCamera.getParameters();
     	return parameters.getMaxZoom();
     }
     public void setExposureCompensation(int ec){
     	//this method assumes that ec is value 0 to 4 corresponding to ec values of -2 to 2
+    	parameters = mCamera.getParameters();
     	int actual_ec = ec - 2;
     	if(actual_ec < parameters.getMaxExposureCompensation() && actual_ec > parameters.getMinExposureCompensation()){
     		parameters.setExposureCompensation(actual_ec);

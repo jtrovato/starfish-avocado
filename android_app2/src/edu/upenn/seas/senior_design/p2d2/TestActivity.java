@@ -122,6 +122,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		mOpenCvCameraView.setCvCameraViewListener(this);
 		//set up timer
 		timer_value = (TextView) findViewById(R.id.timer_value);
+		
 		//start button
 		startButton = (Button) findViewById(R.id.button_start);
 		startButton.setOnClickListener(new View.OnClickListener() {
@@ -131,6 +132,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				startTime = SystemClock.uptimeMillis();
 				customHandler.postDelayed(updateTimerThread, 0);
 			    testInProgress = true;
+			    mOpenCvCameraView.lockCamera(); //enable AWB and AE lock
 				
 			}
 		});
@@ -180,7 +182,8 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
-				mOpenCvCameraView.setExposureCompensation(progress);
+				mOpenCvCameraView.setExposureCompensation(progress); //may need to actually figure out what acceptable value for this are
+				iso=Integer.toString(progress);
 			}
 			public void onStartTrackingTouch(SeekBar seekBar)
 			{
@@ -353,7 +356,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		Mat ch_g = rgb_channels.get(1);
 		
 		
-		if(touch_count > 8)
+		if(touch_count > 7)
 		{
 			double[] fluo = ImageProc.getFluorescence(mRgba, channels);
 			int i =0;
@@ -391,11 +394,11 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		y = (int)((event).getY() - yOffset);
 		
 		
-		if(touch_count > 8)
+		if(touch_count > 7)
 		{
 			
 		}
-		else if(touch_count == 8)
+		else if(touch_count == 7)
 		{
 			cal_points = new MatOfPoint();
 			cal_points.fromArray(points);
