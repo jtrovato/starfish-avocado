@@ -40,8 +40,6 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import edu.upenn.seas.senior_design.p2d2.*;
-
 public class TestActivity extends Activity implements CvCameraViewListener2, OnTouchListener{
 	
 	//static initalizer block  (runs when class is loaded)
@@ -358,12 +356,21 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		if(touch_count > 8)
 		{
 			double[] fluo = ImageProc.getFluorescence(mRgba, channels);
-			Log.i("fluorescence values", Double.toString(fluo[0]));
+			int i =0;
+			Log.i("fluorescence values", Double.toString(fluo[0]) + " " + Double.toString(fluo[1]) + " " + Double.toString(fluo[2]));
+			//outline ROI and Channels
 			Core.rectangle(mRgba, ROI.tl(),ROI.br(),new Scalar( 255, 0, 0 ),4,8, 0 );
 			for(Rect c : channels)
 			{
 				Core.rectangle(mRgba, c.tl(), c.br(), new Scalar( 0, 255, 0 ),2,8, 0 );
+				Core.putText(mRgba, Integer.toString((int)fluo[i]), new Point(c.x - c.width*(0.09/(2*0.04))  , c.y + c.height + 20), 
+					    Core.FONT_HERSHEY_COMPLEX, 0.8, new Scalar(200,200,250), 1);
+				i++;
 			}
+			//display fluo text
+			
+			
+			
 		}
 		
 		//return rgb_channels.get(1); //display the green channel
