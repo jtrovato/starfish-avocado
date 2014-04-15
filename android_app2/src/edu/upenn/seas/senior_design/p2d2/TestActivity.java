@@ -182,7 +182,8 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
-				mOpenCvCameraView.setExposureCompensation(progress); //may need to actually figure out what acceptable value for this are
+				
+				mOpenCvCameraView.setExposureCompensation(progress); //may need to actually figure out what acceptable value for this are.
 				iso=Integer.toString(progress);
 			}
 			public void onStartTrackingTouch(SeekBar seekBar)
@@ -356,7 +357,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		Mat ch_g = rgb_channels.get(1);
 		
 		
-		if(touch_count > 7)
+		if(touch_count > 8)
 		{
 			double[] fluo = ImageProc.getFluorescence(mRgba, channels);
 			int i =0;
@@ -394,11 +395,11 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		y = (int)((event).getY() - yOffset);
 		
 		
-		if(touch_count > 7)
+		if(touch_count > 8)
 		{
 			
 		}
-		else if(touch_count == 7)
+		else if(touch_count == 8)
 		{
 			cal_points = new MatOfPoint();
 			cal_points.fromArray(points);

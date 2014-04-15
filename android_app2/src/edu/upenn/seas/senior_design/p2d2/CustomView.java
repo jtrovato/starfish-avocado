@@ -82,9 +82,15 @@ public class CustomView extends JavaCameraView {
     public void setExposureCompensation(int ec){
     	//this method assumes that ec is value 0 to 4 corresponding to ec values of -2 to 2
     	parameters = mCamera.getParameters();
-    	int actual_ec = ec - 2;
+    	int max_ec = parameters.getMaxExposureCompensation();
+    	int min_ec = parameters.getMinExposureCompensation();
+    	Log.d("exposure comp", "exposure compensation must be between " + Integer.toString(parameters.getMinExposureCompensation())
+				+ "and" + Integer.toString(parameters.getMaxExposureCompensation()) );
+    	//int range = 24;
+    	int actual_ec = ec - 12;
     	if(actual_ec < parameters.getMaxExposureCompensation() && actual_ec > parameters.getMinExposureCompensation()){
     		parameters.setExposureCompensation(actual_ec);
+    		Log.d("exposure comp", "exposure set to " + Integer.toString(actual_ec));
     	}else{
     		parameters.setExposureCompensation(0);
     		Log.e("exposure comp", "exposure compensation must be between " + Integer.toString(parameters.getMinExposureCompensation())

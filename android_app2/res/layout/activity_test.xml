@@ -55,7 +55,7 @@
             android:id="@+id/seekbar_iso"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:max="4" />
+            android:max="24" />
     </LinearLayout>
 
     <LinearLayout
