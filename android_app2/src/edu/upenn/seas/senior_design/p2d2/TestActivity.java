@@ -133,6 +133,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				startTime = SystemClock.uptimeMillis();
 				customHandler.postDelayed(updateTimerThread, 0);
 			    testInProgress = true;
+				mOpenCvCameraView.setMacroFocus();
 			    mOpenCvCameraView.lockCamera(); //enable AWB and AE lock
 				
 			}
@@ -182,14 +183,14 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		//exposure settings
 		isoBar = (SeekBar) findViewById(R.id.seekbar_iso);
 		isoBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			String iso;
+			String exposure;
 			
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 			{
 				
 				mOpenCvCameraView.setExposureCompensation(progress); //may need to actually figure out what acceptable value for this are.
-				iso=Integer.toString(progress);
+				exposure=Integer.toString(progress-12);
 			}
 			@Override
 			public void onStartTrackingTouch(SeekBar seekBar)
@@ -199,7 +200,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar)
 			{
-				Toast.makeText(TestActivity.this, "iso:" + iso,
+				Toast.makeText(TestActivity.this, "exposure:" + exposure,
 						Toast.LENGTH_SHORT).show();
 			}
 		});

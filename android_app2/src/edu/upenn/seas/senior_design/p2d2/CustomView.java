@@ -64,6 +64,12 @@ public class CustomView extends JavaCameraView {
 		if(focusModes.contains(Parameters.FOCUS_MODE_MACRO))
 		{
 			parameters.setFocusMode(Parameters.FOCUS_MODE_MACRO);
+			Log.d("focus modes", "focus set to MACRO");
+		}
+		else
+		{
+			Log.d("focus modes", "could not set focus mode to MACRO");
+
 		}
     	mCamera.setParameters(parameters);//actually set the parameters
     }
@@ -96,6 +102,7 @@ public class CustomView extends JavaCameraView {
     	mCamera.setParameters(parameters);//actually set the parameters
     }
     public void setWhiteBalance(String wb){
+    	parameters = mCamera.getParameters();
     	parameters.setWhiteBalance(wb);
     	mCamera.setParameters(parameters);//actually set the parameters
     }
