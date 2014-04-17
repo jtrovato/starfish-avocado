@@ -12,10 +12,10 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 public class HomeActivity extends Activity implements
 		BTMenuDialogFragment.BTDialogListener {
@@ -31,8 +31,7 @@ public class HomeActivity extends Activity implements
 	private boolean mBound;
 	private String deviceAddress;
 	private BTConnectionService mBTService;
-	final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
-
+	
 	// Defines callbacks for service binding, passed to bindService()
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
@@ -61,25 +60,25 @@ public class HomeActivity extends Activity implements
 		public void onReceive(Context context, Intent intent) {
 			String stringExtra = intent.getStringExtra(getString(R.string.bt_data_type));
 			if(stringExtra == null){
-				Toast.makeText(getApplicationContext(), "Null type", Toast.LENGTH_SHORT).show();
+				Log.e(BLUETOOTH_SERVICE, "Null data type broadcast from BT service");
 				return;
 			}
 			if (stringExtra.equals(getString(R.string.bt_error))) {
 				//process error
-				Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
+				Log.i(BLUETOOTH_SERVICE, "Error sent from device!");
 			} else if (stringExtra.equals(getString(R.string.bt_fluid_state))){
 				// process fluid state
-				Toast.makeText(getApplicationContext(), "Fluid State", Toast.LENGTH_SHORT).show();
+				Log.i(BLUETOOTH_SERVICE, "Fluid state: ");
 			}else if (stringExtra.equals(getString(R.string.bt_heating_state))){
 				// process heating state
-				Toast.makeText(getApplicationContext(), "Heating State", Toast.LENGTH_SHORT).show();
+				Log.i(BLUETOOTH_SERVICE, "Heating state: ");
 			}else if (stringExtra.equals(getString(R.string.bt_led_state))){
 				// process led state
-				Toast.makeText(getApplicationContext(), "LED State", Toast.LENGTH_SHORT).show();
+				Log.i(BLUETOOTH_SERVICE, "LED state: ");
 			}
 			else if (stringExtra.equals(getString(R.string.bt_temp_data))){
 				// process temp data
-				Toast.makeText(getApplicationContext(), "Temp Data", Toast.LENGTH_SHORT).show();
+				Log.i(BLUETOOTH_SERVICE, "Temperature: ");
 			}
 		}
 	};
