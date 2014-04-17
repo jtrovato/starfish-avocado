@@ -31,7 +31,8 @@ public class HomeActivity extends Activity implements
 	private boolean mBound;
 	private String deviceAddress;
 	private BTConnectionService mBTService;
-	
+	private LocalBroadcastManager manager;
+
 	// Defines callbacks for service binding, passed to bindService()
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
@@ -58,25 +59,26 @@ public class HomeActivity extends Activity implements
 	private final BroadcastReceiver mBTDataReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			String stringExtra = intent.getStringExtra(getString(R.string.bt_data_type));
-			if(stringExtra == null){
-				Log.e(BLUETOOTH_SERVICE, "Null data type broadcast from BT service");
+			String stringExtra = intent
+					.getStringExtra(getString(R.string.bt_data_type));
+			if (stringExtra == null) {
+				Log.e(BLUETOOTH_SERVICE,
+						"Null data type broadcast from BT service");
 				return;
 			}
 			if (stringExtra.equals(getString(R.string.bt_error))) {
-				//process error
+				// process error
 				Log.i(BLUETOOTH_SERVICE, "Error sent from device!");
-			} else if (stringExtra.equals(getString(R.string.bt_fluid_state))){
+			} else if (stringExtra.equals(getString(R.string.bt_fluid_state))) {
 				// process fluid state
 				Log.i(BLUETOOTH_SERVICE, "Fluid state: ");
-			}else if (stringExtra.equals(getString(R.string.bt_heating_state))){
+			} else if (stringExtra.equals(getString(R.string.bt_heating_state))) {
 				// process heating state
 				Log.i(BLUETOOTH_SERVICE, "Heating state: ");
-			}else if (stringExtra.equals(getString(R.string.bt_led_state))){
+			} else if (stringExtra.equals(getString(R.string.bt_led_state))) {
 				// process led state
 				Log.i(BLUETOOTH_SERVICE, "LED state: ");
-			}
-			else if (stringExtra.equals(getString(R.string.bt_temp_data))){
+			} else if (stringExtra.equals(getString(R.string.bt_temp_data))) {
 				// process temp data
 				Log.i(BLUETOOTH_SERVICE, "Temperature: ");
 			}
@@ -132,6 +134,7 @@ public class HomeActivity extends Activity implements
 		});
 		isBTServiceConnected = false;
 		mBound = false;
+		manager = LocalBroadcastManager.getInstance(getApplicationContext());
 	}
 
 	@Override
@@ -174,12 +177,12 @@ public class HomeActivity extends Activity implements
 			mBTService.closeConnection();
 			unbindService(mConnection);
 			isBTServiceConnected = false;
+			manager.unregisterReceiver(mBTDataReceiver);
+			manager.unregisterReceiver(mBTStopReceiver);
 		}
 		Intent intent = new Intent(this, BTConnectionService.class);
 		mBound = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 		// Register Broadcast receivers for BT Service
-		LocalBroadcastManager manager = LocalBroadcastManager
-				.getInstance(getApplicationContext());
 		// Receiver for data
 		IntentFilter dataFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_RECIEVED);
@@ -187,6 +190,6 @@ public class HomeActivity extends Activity implements
 		// Receiver for stopping service
 		IntentFilter stopFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_STOP);
-		manager.registerReceiver(mBTDataReceiver, stopFilter);
+		manager.registerReceiver(mBTStopReceiver, stopFilter);
 	}
 }
