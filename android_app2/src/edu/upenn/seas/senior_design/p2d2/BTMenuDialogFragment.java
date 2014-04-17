@@ -50,6 +50,12 @@ public class BTMenuDialogFragment extends DialogFragment {
 					+ " must implement BTDialogListener");
 		}
 	}
+	
+	@Override
+	public void onDetach() {
+		getActivity().unregisterReceiver(mReceiver);
+		super.onDetach();
+	}
 
 	/**
 	 * Initializes the dialog when it is created

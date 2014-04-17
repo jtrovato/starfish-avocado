@@ -12,10 +12,10 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 public class HomeActivity extends Activity implements
 		BTMenuDialogFragment.BTDialogListener {
@@ -31,7 +31,7 @@ public class HomeActivity extends Activity implements
 	private boolean mBound;
 	private String deviceAddress;
 	private BTConnectionService mBTService;
-	final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
+	private LocalBroadcastManager manager;
 
 	// Defines callbacks for service binding, passed to bindService()
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -59,27 +59,23 @@ public class HomeActivity extends Activity implements
 	private final BroadcastReceiver mBTDataReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			String stringExtra = intent.getStringExtra(getString(R.string.bt_data_type));
-			if(stringExtra == null){
-				Toast.makeText(getApplicationContext(), "Null type", Toast.LENGTH_SHORT).show();
+			String stringExtra = intent
+					.getStringExtra(getString(R.string.bt_data_type));
+			if (stringExtra == null) {
+				Log.e(BLUETOOTH_SERVICE,
+						"Null data type broadcast from BT service");
 				return;
 			}
 			if (stringExtra.equals(getString(R.string.bt_error))) {
-				//process error
-				Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
-			} else if (stringExtra.equals(getString(R.string.bt_fluid_state))){
-				// process fluid state
-				Toast.makeText(getApplicationContext(), "Fluid State", Toast.LENGTH_SHORT).show();
-			}else if (stringExtra.equals(getString(R.string.bt_heating_state))){
-				// process heating state
-				Toast.makeText(getApplicationContext(), "Heating State", Toast.LENGTH_SHORT).show();
-			}else if (stringExtra.equals(getString(R.string.bt_led_state))){
-				// process led state
-				Toast.makeText(getApplicationContext(), "LED State", Toast.LENGTH_SHORT).show();
-			}
-			else if (stringExtra.equals(getString(R.string.bt_temp_data))){
-				// process temp data
-				Toast.makeText(getApplicationContext(), "Temp Data", Toast.LENGTH_SHORT).show();
+				processError(intent);
+			} else if (stringExtra.equals(getString(R.string.bt_fluid_state))) {
+				processFluidActuationState(intent);
+			} else if (stringExtra.equals(getString(R.string.bt_heating_state))) {
+				processHeatingState(intent);
+			} else if (stringExtra.equals(getString(R.string.bt_led_state))) {
+				processLEDState(intent);
+			} else if (stringExtra.equals(getString(R.string.bt_temp_data))) {
+				processTempData(intent);
 			}
 		}
 	};
@@ -134,6 +130,7 @@ public class HomeActivity extends Activity implements
 		});
 		isBTServiceConnected = false;
 		mBound = false;
+		manager = LocalBroadcastManager.getInstance(getApplicationContext());
 	}
 
 	@Override
@@ -176,12 +173,12 @@ public class HomeActivity extends Activity implements
 			mBTService.closeConnection();
 			unbindService(mConnection);
 			isBTServiceConnected = false;
+			manager.unregisterReceiver(mBTDataReceiver);
+			manager.unregisterReceiver(mBTStopReceiver);
 		}
 		Intent intent = new Intent(this, BTConnectionService.class);
 		mBound = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 		// Register Broadcast receivers for BT Service
-		LocalBroadcastManager manager = LocalBroadcastManager
-				.getInstance(getApplicationContext());
 		// Receiver for data
 		IntentFilter dataFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_RECIEVED);
@@ -189,6 +186,110 @@ public class HomeActivity extends Activity implements
 		// Receiver for stopping service
 		IntentFilter stopFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_STOP);
-		manager.registerReceiver(mBTDataReceiver, stopFilter);
+		manager.registerReceiver(mBTStopReceiver, stopFilter);
+	}
+
+	/***************************************************************************
+	 * Methods for processing BT Data
+	 **************************************************************************/
+	private void processTempData(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFF);
+		if (dataOne == (byte) 0xFF) {
+			Log.e(BLUETOOTH_SERVICE, "Bad temp data reached processTempData()");
+			return;
+		}
+		byte dataTwo = intent.getByteExtra(getString(R.string.bt_data_2),
+				(byte) 0xFF);
+		int tempData = dataOne * 256 + dataTwo;
+		String tempDataString = Integer.toString(tempData);
+		Log.i(BLUETOOTH_SERVICE, "Temperature = " + tempDataString + " Celcius");
+	}
+
+	private void processHeatingState(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFA);
+		switch (dataOne) {
+		case (byte) 0x00:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Stopped");
+			break;
+		case (byte) 0x31:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 1");
+			break;
+		case (byte) 0x33:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 1");
+			break;
+		case (byte) 0x51:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 2");
+			break;
+		case (byte) 0x55:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 2");
+			break;
+		case (byte) 0x62:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 3");
+			break;
+		case (byte) 0x66:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 3");
+			break;
+		case (byte) 0xF7:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 4");
+			break;
+		case (byte) 0xFF:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 4");
+			break;
+		default:
+			Log.e(BLUETOOTH_SERVICE,
+					"Bad fluid actuation state reached processFluidActuationState()");
+			break;
+		}
+	}
+
+	private void processLEDState(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFA);
+		switch (dataOne) {
+		case (byte) 0x00:
+			Log.i(BLUETOOTH_SERVICE, "LEDS: OFF");
+			break;
+		case (byte) 0xFF:
+			Log.i(BLUETOOTH_SERVICE, "LEDS: ON");
+			break;
+		default:
+			Log.e(BLUETOOTH_SERVICE, "Bad LED state reached processLEDState()");
+			break;
+		}
+	}
+
+	private void processFluidActuationState(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFA);
+		switch (dataOne) {
+		case (byte) 0x00:
+			Log.i(BLUETOOTH_SERVICE, "Fluids: not yet actuated");
+			break;
+		case (byte) 0x44:
+			Log.i(BLUETOOTH_SERVICE, "Fluids: currently actuating");
+			break;
+		case (byte) 0xFF:
+			Log.i(BLUETOOTH_SERVICE, "Fluids: already actuated");
+			break;
+		default:
+			Log.e(BLUETOOTH_SERVICE,
+					"Bad fluid actuation state reached processFluidActuationState()");
+			break;
+		}
+	}
+
+	private void processError(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFF);
+		switch (dataOne) {
+		case (byte) 0x11:
+			Log.e(BLUETOOTH_SERVICE, "Temperature out of range!");
+			break;
+		default:
+			Log.e(BLUETOOTH_SERVICE, "Bad error intent reached processError()");
+			break;
+		}
 	}
 }

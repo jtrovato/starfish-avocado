@@ -187,13 +187,20 @@ public class BTConnectionService extends Service {
 					int length = (int) buffer[2];
 					int start = 3;
 					for (int i = 0; i < length; i++) {
-						if (numBytes < start) {
+						if (numBytes <= start) {
 							int temp = numBytes;
-							numBytes = checkForMore(buffer, numBytes);
-							if (numBytes <= temp) {
-								Log.e(BLUETOOTH_SERVICE,
-										"Packet not fully received from device");
-								return;
+							int count = 0;
+							while (numBytes <= temp) {
+								try {
+									Thread.sleep(100);
+								} catch (InterruptedException e) {}
+								if (count > 10) {
+									Log.e(BLUETOOTH_SERVICE,
+											"Packet not fully received from device");
+									return;
+								}
+								count++;
+								numBytes += checkForMore(buffer, numBytes);
 							}
 						}
 						int delta = processTag(buffer, start, numBytes);
@@ -211,20 +218,24 @@ public class BTConnectionService extends Service {
 		}
 
 		private int checkForMore(byte[] buffer, int numBytes) {
+			int additional = 0;
 			try {
-				int additional;
 				// Read from the InputStream
 				additional = mmInStream.available();
 				if (additional > 0) {
 					additional = mmInStream.read(buffer, numBytes,
 							buffer.length - numBytes);
-					if (additional > 0) {
-						numBytes += additional;
+					if (additional <= 0) {
+						Log.e(BLUETOOTH_SERVICE, "");
 					}
+				} else {
+					Log.i(BLUETOOTH_SERVICE, "Additional 0-");
 				}
-			} catch (IOException e) {} finally {
-				return numBytes;
+			} catch (IOException e) {
+				Log.e(BLUETOOTH_SERVICE,
+						"Error when checking for additional bytes in packet!");
 			}
+			return additional;
 		}
 
 		private int processTag(byte[] buffer, int start, int numBytes) {
