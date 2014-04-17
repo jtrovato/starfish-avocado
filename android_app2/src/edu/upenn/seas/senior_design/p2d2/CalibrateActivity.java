@@ -114,6 +114,12 @@ public class CalibrateActivity extends Activity {
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }//end of onCreate()
     
+    @Override
+    protected void onDestroy() {
+    	unbindService(mConnection);
+    	super.onDestroy();
+    }
+    
     //AsyncTask allows for test to be run off of the main Thread
     //uses an integer as an input parameter (test to be run)
     //returns void to track progress (no progress tracking data)
