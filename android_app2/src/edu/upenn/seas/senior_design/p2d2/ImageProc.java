@@ -11,15 +11,15 @@ import org.opencv.core.Size;
 
 public class ImageProc {
 	
-	public static double[] getFluorescence(Mat inputIm,  ArrayList<Rect> channels)
+	public static int[] getFluorescence(Mat inputIm,  ArrayList<Rect> channels)
 	{
 		Scalar temp_scalar;
-		double[] fluo = new double[channels.size()];
+		int[] fluo = new int[channels.size()];
 		for(int i =0; i<3;i++)
 		{
 			Mat ch = inputIm.submat(channels.get(i)); //get a mat of the channels area
 			temp_scalar = Core.sumElems(ch);
-			fluo[i] = temp_scalar.val[0];
+			fluo[i] = (int)temp_scalar.val[0];
 		}
 		
 		return fluo;

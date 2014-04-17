@@ -82,6 +82,8 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	private int touch_count = 0;
 	private ArrayList<Rect> channels = new ArrayList<Rect>();
 	ArrayList<Mat> rgb_channels = new ArrayList<Mat>();
+	//store the fluo data
+	public ArrayList<int[]> fluo_data;
 	
 	//constructor, necessary?
 	public TestActivity(){
@@ -379,9 +381,10 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		Mat ch_g = rgb_channels.get(1);
 		
 		
-		if(touch_count > 8)
+		if(touch_count > 8) //if the calibration routine is complete
 		{
-			double[] fluo = ImageProc.getFluorescence(mRgba, channels);
+			int[] fluo = ImageProc.getFluorescence(mRgba, channels);
+			fluo_data.add(fluo);
 			int i =0;
 			Log.i("fluorescence values", Double.toString(fluo[0]) + " " + Double.toString(fluo[1]) + " " + Double.toString(fluo[2]));
 			//outline ROI and Channels
@@ -389,11 +392,12 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			for(Rect c : channels)
 			{
 				Core.rectangle(mRgba, c.tl(), c.br(), new Scalar( 0, 255, 0 ),2,8, 0 );
-				Core.putText(mRgba, Integer.toString((int)fluo[i]), new Point(c.x - c.width*(0.09/(2*0.04))  , c.y + c.height + 20), 
+				Core.putText(mRgba, Integer.toString(fluo[i]), new Point(c.x - c.width*(0.09/(2*0.04))  , c.y + c.height + 20), 
 					    Core.FONT_HERSHEY_COMPLEX, 0.8, new Scalar(200,200,250), 1);
 				i++;
 			}
-			//display fluo text
+			//store the data
+			
 			
 			
 			

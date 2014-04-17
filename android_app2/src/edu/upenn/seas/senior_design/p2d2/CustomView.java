@@ -25,7 +25,7 @@ public class CustomView extends JavaCameraView {
 	public static final int MEDIA_TYPE_IMAGE = 1;
 	public static final int MEDIA_TYPE_VIDEO = 2;
 	private Camera.Parameters parameters;
-    private static final String TAG = "Sample::Tutorial3View";
+    private static final String TAG = "Custom Open CV Camera View";
 
     public CustomView(Context context, AttributeSet attrs) {
         super(context, attrs);
