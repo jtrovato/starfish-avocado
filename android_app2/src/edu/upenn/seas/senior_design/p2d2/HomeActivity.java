@@ -67,20 +67,15 @@ public class HomeActivity extends Activity implements
 				return;
 			}
 			if (stringExtra.equals(getString(R.string.bt_error))) {
-				// process error
-				Log.i(BLUETOOTH_SERVICE, "Error sent from device!");
+				processError(intent);
 			} else if (stringExtra.equals(getString(R.string.bt_fluid_state))) {
-				// process fluid state
-				Log.i(BLUETOOTH_SERVICE, "Fluid state: ");
+				processFluidActuationState(intent);
 			} else if (stringExtra.equals(getString(R.string.bt_heating_state))) {
-				// process heating state
-				Log.i(BLUETOOTH_SERVICE, "Heating state: ");
+				processHeatingState(intent);
 			} else if (stringExtra.equals(getString(R.string.bt_led_state))) {
-				// process led state
-				Log.i(BLUETOOTH_SERVICE, "LED state: ");
+				processLEDState(intent);
 			} else if (stringExtra.equals(getString(R.string.bt_temp_data))) {
-				// process temp data
-				Log.i(BLUETOOTH_SERVICE, "Temperature: ");
+				processTempData(intent);
 			}
 		}
 	};
@@ -191,5 +186,109 @@ public class HomeActivity extends Activity implements
 		IntentFilter stopFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_STOP);
 		manager.registerReceiver(mBTStopReceiver, stopFilter);
+	}
+
+	/***************************************************************************
+	 * Methods for processing BT Data
+	 **************************************************************************/
+	private void processTempData(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFF);
+		if (dataOne == (byte) 0xFF) {
+			Log.e(BLUETOOTH_SERVICE, "Bad temp data reached processTempData()");
+			return;
+		}
+		byte dataTwo = intent.getByteExtra(getString(R.string.bt_data_2),
+				(byte) 0xFF);
+		int tempData = dataOne * 256 + dataTwo;
+		String tempDataString = Integer.toString(tempData);
+		Log.i(BLUETOOTH_SERVICE, "Temperature = " + tempDataString + " Celcius");
+	}
+
+	private void processHeatingState(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFA);
+		switch (dataOne) {
+		case (byte) 0x00:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Stopped");
+			break;
+		case (byte) 0x31:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 1");
+			break;
+		case (byte) 0x33:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 1");
+			break;
+		case (byte) 0x51:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 2");
+			break;
+		case (byte) 0x55:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 2");
+			break;
+		case (byte) 0x62:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 3");
+			break;
+		case (byte) 0x66:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 3");
+			break;
+		case (byte) 0xF7:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 4");
+			break;
+		case (byte) 0xFF:
+			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 4");
+			break;
+		default:
+			Log.e(BLUETOOTH_SERVICE,
+					"Bad fluid actuation state reached processFluidActuationState()");
+			break;
+		}
+	}
+
+	private void processLEDState(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFA);
+		switch (dataOne) {
+		case (byte) 0x00:
+			Log.i(BLUETOOTH_SERVICE, "LEDS: OFF");
+			break;
+		case (byte) 0xFF:
+			Log.i(BLUETOOTH_SERVICE, "LEDS: ON");
+			break;
+		default:
+			Log.e(BLUETOOTH_SERVICE, "Bad LED state reached processLEDState()");
+			break;
+		}
+	}
+
+	private void processFluidActuationState(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFA);
+		switch (dataOne) {
+		case (byte) 0x00:
+			Log.i(BLUETOOTH_SERVICE, "Fluids: not yet actuated");
+			break;
+		case (byte) 0x44:
+			Log.i(BLUETOOTH_SERVICE, "Fluids: currently actuating");
+			break;
+		case (byte) 0xFF:
+			Log.i(BLUETOOTH_SERVICE, "Fluids: already actuated");
+			break;
+		default:
+			Log.e(BLUETOOTH_SERVICE,
+					"Bad fluid actuation state reached processFluidActuationState()");
+			break;
+		}
+	}
+
+	private void processError(Intent intent) {
+		byte dataOne = intent.getByteExtra(getString(R.string.bt_data_1),
+				(byte) 0xFF);
+		switch (dataOne) {
+		case (byte) 0x11:
+			Log.e(BLUETOOTH_SERVICE, "Temperature out of range!");
+			break;
+		default:
+			Log.e(BLUETOOTH_SERVICE, "Bad error intent reached processError()");
+			break;
+		}
 	}
 }
