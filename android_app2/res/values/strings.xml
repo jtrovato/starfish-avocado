@@ -28,6 +28,11 @@
     <string name="calibrate_button_text">Test All</string>
     <string name="title_activity_calibrate_screen">Calibration Settings</string>
 
+    <string name="graph_text">Graph goes here</string>
+    <string name="test_text">Test goes here</string>
+    <string name="log_text">Logs go here</string>
+    <string name="title_tab_activity">TestTabActivity</string>
+
     <!-- Bluetooth broadcast strings -->
     <string name="bt_disconnect_broadcast">DISCONNECT</string>
     <string name="bt_data_type">TYPE</string>
@@ -46,3 +51,4 @@
     <string name="bt_unavailable_dialog_text">"Bluetooth is disabled or not available on this device, so this part of the app is unavailable"</string>
 
 </resources>
+

@@ -95,6 +95,7 @@ public class HomeActivity extends Activity implements
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_home);
+		
 		// test button
 		testButton = (Button) findViewById(R.id.button_test);
 		testButton.setOnClickListener(new View.OnClickListener() {
@@ -102,7 +103,7 @@ public class HomeActivity extends Activity implements
 			public void onClick(View view) {
 				// start the Test Activity using an intent
 				Intent testIntent = new Intent(HomeActivity.this,
-						TestActivity.class);
+						MainTabActivity.class);
 				// myIntent.putExtra("key", value); //to pass info if needed
 				HomeActivity.this.startActivity(testIntent);
 			}
