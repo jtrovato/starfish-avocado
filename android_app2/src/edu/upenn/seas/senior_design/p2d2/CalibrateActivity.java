@@ -154,7 +154,7 @@ public class CalibrateActivity extends Activity {
 
 		Intent intent = new Intent(this, BTConnectionService.class);
 		bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-		
+
 		// Register Broadcast receivers for BT Service
 		manager = LocalBroadcastManager.getInstance(getApplicationContext());
 		// Receiver for data
@@ -298,17 +298,24 @@ public class CalibrateActivity extends Activity {
 	}
 
 	public boolean pumpTest() {
-		byte[] bytes = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x8F,
-				(byte) 0xFF };
+		byte[] check = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0xFF,
+				(byte) 0x8F };
 
-		if (list.get(1).testPassed()) {
-			bytes[4] = (byte) 0x00;
+		// if (list.get(1).testPassed()) { bytes[4] = (byte) 0x00; }
+
+		mBTService.writeToBT(check);
+
+		int count = 0;
+		while (!list.get(1).testPassed()) {
+			if (count > 200) {
+				break;
+			}
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {}
+			count++;
 		}
-
-		mBTService.writeToBT(bytes);
-
-		list.get(1).setTestResult(!list.get(1).testPassed());
-
+		
 		return list.get(1).testPassed();
 	}
 
@@ -405,15 +412,19 @@ public class CalibrateActivity extends Activity {
 				(byte) 0xFA);
 		switch (dataOne) {
 		case (byte) 0x00:
+			list.get(1).setTestResult(true);
 			Log.i(BLUETOOTH_SERVICE, "Fluids: not yet actuated");
 			break;
 		case (byte) 0x44:
+			list.get(1).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Fluids: currently actuating");
 			break;
 		case (byte) 0xFF:
+			list.get(1).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Fluids: already actuated");
 			break;
 		default:
+			list.get(1).setTestResult(false);
 			Log.e(BLUETOOTH_SERVICE,
 					"Bad fluid actuation state reached processFluidActuationState()");
 			break;
