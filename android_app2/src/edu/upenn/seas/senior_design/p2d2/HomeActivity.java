@@ -103,7 +103,7 @@ public class HomeActivity extends Activity implements
 			public void onClick(View view) {
 				// start the Test Activity using an intent
 				Intent testIntent = new Intent(HomeActivity.this,
-						TestActivity.class);
+						MainTabActivity.class);
 				// myIntent.putExtra("key", value); //to pass info if needed
 				HomeActivity.this.startActivity(testIntent);
 			}
@@ -120,6 +120,7 @@ public class HomeActivity extends Activity implements
 				HomeActivity.this.startActivity(testIntent);
 			}
 		});
+		/*
 		// Bluetooth setup button
 		btButton = (Button) findViewById(R.id.button_bluetooth);
 		btButton.setOnClickListener(new View.OnClickListener() {
@@ -127,10 +128,20 @@ public class HomeActivity extends Activity implements
 			public void onClick(View view) {
 				showPopup();
 			}
-		});
+		}); */
 		isBTServiceConnected = false;
 		mBound = false;
 		manager = LocalBroadcastManager.getInstance(getApplicationContext());
+		
+		homeInstruction();
+	}
+	//instructions
+	private void homeInstruction() {
+		DialogFragment homeInstAlert = new InstructionsFragment().newInstance();
+		Bundle bundle = new Bundle();
+		bundle.putInt("inst", 0); //0 corresponds to home instructions
+		homeInstAlert.setArguments(bundle);
+		homeInstAlert.show(getFragmentManager(), "home_inst");
 	}
 
 	@Override

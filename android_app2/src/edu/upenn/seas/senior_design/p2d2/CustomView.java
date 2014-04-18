@@ -30,6 +30,14 @@ public class CustomView extends JavaCameraView {
     public CustomView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
+    public void init(int width, int height)
+    {
+    	connectCamera(width, height);
+    }
+    public void releaseCam()
+    {
+    	releaseCamera();
+    }
     
     @SuppressLint("NewApi")
 	public void lockCamera(){
@@ -83,6 +91,8 @@ public class CustomView extends JavaCameraView {
     	mCamera.setParameters(parameters);//actually set the parameters
     }
     public int getMaxZoom(){
+    	if(mCamera == null)
+    		Log.e(TAG, "mCamera is null");
     	parameters = mCamera.getParameters();
     	return parameters.getMaxZoom();
     }

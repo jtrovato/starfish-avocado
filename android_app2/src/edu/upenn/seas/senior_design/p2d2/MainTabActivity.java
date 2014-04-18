@@ -1,7 +1,9 @@
 package edu.upenn.seas.senior_design.p2d2;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.OpenCVLoader;
@@ -18,7 +20,9 @@ import org.opencv.imgproc.Imgproc;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.app.ActionBar;
+import android.app.DialogFragment;
 import android.app.FragmentTransaction;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
@@ -34,6 +38,13 @@ import android.widget.TextView;
 
 public class MainTabActivity extends FragmentActivity implements CvCameraViewListener2, OnTouchListener {
 	
+	//static initalizer block  (runs when class is loaded)
+	static{
+		if(!OpenCVLoader.initDebug()){
+			Log.e("openCV", "error initializing OpenCV");
+		}
+	}
+	
 	//Action Bar stuff
 	ViewPager Tab;
     TabPagerAdapter TabAdapter;
@@ -41,42 +52,64 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	//image stuff
 	public static String TAG="P2D2 MainTabAcitivity";
 	//image control stuff
-	private SeekBar isoBar;
-	private SeekBar zoomBar;
-	private SeekBar wbBar;
+	public SeekBar isoBar;
+	public SeekBar zoomBar;
+	public SeekBar wbBar;
 	//timer stuff
-	private Button startButton;
-	private Button stopButton;
-	private TextView timer_value;
-	private long startTime = 0L;
-	private Handler customHandler = new Handler();
-	long timeInMilliseconds = 0L;
-	long timeSwapBuff = 0L;
-	long updatedTime = 0L;
+	public Button startButton;
+	public Button stopButton;
+	public TextView timer_value;
+	public long startTime = 0L;
+	public Handler customHandler = new Handler();
+	public long timeInMilliseconds = 0L;
+	public long timeSwapBuff = 0L;
+	public long updatedTime = 0L;
 	//scheduler stuff
-	private boolean testInProgress = false;
-	private ScheduledExecutorService  scheduleTaskExecutor;
+	public boolean testInProgress = false;
+	public ScheduledExecutorService  scheduleTaskExecutor;
 	//openCV stuff
-	private Mat mRgba;
-	private Mat mGray;
-	private Mat mRgbaT;
-	private CustomView mOpenCvCameraView;
-	private Rect ROI;
-	private Point[] points = new Point[8];
-	private MatOfPoint cal_points;
-	private int x;
-	private int y;
-	private int touch_count = 0;
-	private ArrayList<Rect> channels = new ArrayList<Rect>();
+	public Mat mRgba;
+	public Mat mGray;
+	public Mat mRgbaT;
+	public CustomView mOpenCvCameraView;
+	public Rect ROI;
+	public Point[] points = new Point[8];
+	public MatOfPoint cal_points;
+	public int x;
+	public int y;
+	public int touch_count = 0;
+	public ArrayList<Rect> channels = new ArrayList<Rect>();
 	ArrayList<Mat> rgb_channels = new ArrayList<Mat>();
 	//store the fluo data
-	public ArrayList<int[]> fluo_data;
+	public ArrayList<int[]> fluo_data = new ArrayList<int[]>();
 	
 	//constructor, necessary?
 	public MainTabActivity(){
 		Log.i(TAG, "Instantiated new "+this.getClass());
 	}
 	
+	//display view on screen
+	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this){
+		@Override
+		public void onManagerConnected(int status){
+			switch(status){
+			case LoaderCallbackInterface.SUCCESS:
+			{
+				mRgba = new Mat();
+				mGray = new Mat();
+				mRgbaT = new Mat();
+				Log.i(TAG, "OpenCV loaded successfully");
+				mOpenCvCameraView.enableView();
+				mOpenCvCameraView.setOnTouchListener(MainTabActivity.this);
+			} break;
+			default:
+			{
+				super.onManagerConnected(status);
+				Log.d(TAG, "OpenCv was not laoded correctly");
+			}break;
+			}
+		}
+	};
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////   The Standard Activity Functions  /////////////////////////////////////////////////
@@ -132,7 +165,32 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			actionBar.addTab(actionBar.newTab().setText("Graph").setTabListener(tabListener));
 			actionBar.addTab(actionBar.newTab().setText("Logs").setTabListener(tabListener));
 			
-			//The Camera View is implemented in the fragment
+			//opencv camera view is implemented in TestTab()
+			
+			
+			//scheduled executor to take pictures at a certain rate.
+			scheduleTaskExecutor = Executors.newScheduledThreadPool(5);
+			scheduleTaskExecutor.scheduleAtFixedRate(new Runnable(){
+				@Override
+				public void run(){
+					//the task
+					if(testInProgress)//causes unpredictable delays, but not an issue
+					{
+						Log.i(TAG, "taking picture now");
+						mOpenCvCameraView.takePicture();
+						//update the UI if necessary
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								//update the UI component here
+							}
+						});
+					}
+				}
+			}, 10, 10, TimeUnit.SECONDS);
+			
+			//instructions
+			testInstruction();
 
 			
 
@@ -149,15 +207,17 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	protected void onResume()
 	{
 		super.onResume();
-		//OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_5,  this, mLoaderCallback); //this call is called when activity starts and causes the app the crash
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_5,  this, mLoaderCallback); //this call is called when activity starts and causes the app the crash
 	}
 	
 	@Override
 	public void onDestroy()
 	{
 		super.onDestroy();
+		//mOpenCvCameraView.releaseCam();
 		if(mOpenCvCameraView != null)
 			mOpenCvCameraView.disableView();
+		
 	}
 	
 	@Override
@@ -167,48 +227,55 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		return true;
 	}
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////   Misc. Functions           ////////////////////////////////////////////////////////
+	
+	//this is a worker thread for the timer
+	public Runnable updateTimerThread = new Runnable(){
+		@Override
+		public void run(){
+			timeInMilliseconds = SystemClock.uptimeMillis() - startTime;
+			updatedTime = timeSwapBuff + timeInMilliseconds;
+
+			int secs = (int)(updatedTime/1000);
+			int mins = secs/60;
+			secs = secs%60;
+			int milliseconds = (int)(updatedTime%1000);
+			timer_value.setText("" + mins + ":" 
+					+ String.format("%02d",  secs) + ":"
+					+ String.format("%03d", milliseconds));
+			customHandler.postDelayed(this, 0);
+
+		}
+	};
+
+	//instructions
+	private void testInstruction() {
+		DialogFragment testInstAlert = new InstructionsFragment().newInstance();
+		Bundle bundle = new Bundle();
+		bundle.putInt("inst", 1); //1 corresponds to test instructions
+		testInstAlert.setArguments(bundle);
+		testInstAlert.show(getFragmentManager(), "test_inst");
+		}
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////   Camera View Functions           /////////////////////////////////////////////////
-	
-    //display view on screen
-  	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this){
-  		@Override
-  		public void onManagerConnected(int status){
-  			switch(status){
-  			case LoaderCallbackInterface.SUCCESS:
-  			{
-  				mRgba = new Mat();
-  				mGray = new Mat();
-  				mRgbaT = new Mat();
-  				Log.i(TAG, "OpenCV loaded successfully");
-  				mOpenCvCameraView.enableView();
-  				mOpenCvCameraView.setOnTouchListener(MainTabActivity.this);
-  			} break;
-  			default:
-  			{
-  				super.onManagerConnected(status);
-  			}break;
-  			}
-  		}
-  	};
-/*
-	@Override
+  	
+  	@Override
 	public void onCameraViewStarted(int width, int height) {
 		mGray = new Mat();
-		mRgba = new Mat();		
+		mRgba = new Mat();
+		
 	}
 
 	@Override
 	public void onCameraViewStopped() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	// this method should only be used for displaying real time images //
+	/* this method should only be used for displaying real time images */
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-		
 		//note: Mat.t() and Core.split() has a memory leak (causes the app to crash in some other way)
 		//UPDATE: fixed the memory leaks by releasing the Mats used in this function but the app still crashes after a few seconds.	
 		mRgba.release();
@@ -253,13 +320,11 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		return mRgba;
 	}
 	
-
-
 	
-	//@Override
-	//this method is executed every time the user touches the screen.camera view 
-	public boolean onTouch(View arg0, MotionEvent event) 
-	{
+	
+	@Override
+	/* this method is executed every time the user touches the screen.camera view */
+	public boolean onTouch(View arg0, MotionEvent event) {
 		double cols = mRgba.cols();
 		double rows = mRgba.rows();
 
@@ -294,33 +359,6 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		
 		return false;
 	}
- */
-
-	@Override
-	public boolean onTouch(View v, MotionEvent event) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-
-	@Override
-	public void onCameraViewStarted(int width, int height) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	public void onCameraViewStopped() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
     
 }

@@ -20,6 +20,7 @@ import org.opencv.imgproc.Imgproc;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -107,6 +108,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			default:
 			{
 				super.onManagerConnected(status);
+				Log.d(TAG, "OpenCv was not laoded correctly");
 			}break;
 			}
 		}
@@ -280,12 +282,18 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 		});*/
 		
 		//calibration instructions
-		Toast inst_toast = Toast.makeText(TestActivity.this, "Select three points in each channel to calibrate",
-				Toast.LENGTH_LONG);
-		inst_toast.setGravity(Gravity.TOP, 0, 0);
-		inst_toast.show();
+		testInstruction();
 		
 	} 
+	//instructions
+	private void testInstruction() {
+		DialogFragment testInstAlert = new InstructionsFragment().newInstance();
+		Bundle bundle = new Bundle();
+		bundle.putInt("inst", 1); //1 corresponds to test instructions
+		testInstAlert.setArguments(bundle);
+		testInstAlert.show(getFragmentManager(), "test_inst");
+	}
+
 
 	//this is a worker thread for the timer
 	private Runnable updateTimerThread = new Runnable(){
