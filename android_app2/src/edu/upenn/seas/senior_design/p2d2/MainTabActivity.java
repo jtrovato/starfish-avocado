@@ -56,7 +56,7 @@ public class MainTabActivity extends FragmentActivity {
 			//Add New Tab
 			actionBar.addTab(actionBar.newTab().setText("Test").setTabListener(tabListener));
 			actionBar.addTab(actionBar.newTab().setText("Graph").setTabListener(tabListener));
-			actionBar.addTab(actionBar.newTab().setText("Third Tab").setTabListener(tabListener));
+			actionBar.addTab(actionBar.newTab().setText("Logs").setTabListener(tabListener));
 
     }
 

@@ -21,7 +21,7 @@ public class TabPagerAdapter extends FragmentStatePagerAdapter {
             return new GraphTab();
         case 2:
             //Fragment for Windows Tab
-            return new TestTab();
+            return new LogTab();
         }
 		return null;
 		
