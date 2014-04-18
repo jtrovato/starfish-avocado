@@ -103,7 +103,7 @@ public class HomeActivity extends Activity implements
 			public void onClick(View view) {
 				// start the Test Activity using an intent
 				Intent testIntent = new Intent(HomeActivity.this,
-						MainTabActivity.class);
+						TestActivity.class);
 				// myIntent.putExtra("key", value); //to pass info if needed
 				HomeActivity.this.startActivity(testIntent);
 			}

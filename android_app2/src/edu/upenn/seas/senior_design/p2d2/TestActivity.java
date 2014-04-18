@@ -83,7 +83,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	private ArrayList<Rect> channels = new ArrayList<Rect>();
 	ArrayList<Mat> rgb_channels = new ArrayList<Mat>();
 	//store the fluo data
-	public ArrayList<int[]> fluo_data;
+	public ArrayList<int[]> fluo_data = new ArrayList<int[]>();
 	
 	//constructor, necessary?
 	public TestActivity(){
@@ -135,7 +135,6 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				startTime = SystemClock.uptimeMillis();
 				customHandler.postDelayed(updateTimerThread, 0);
 			    testInProgress = true;
-				mOpenCvCameraView.setMacroFocus();
 			    mOpenCvCameraView.lockCamera(); //enable AWB and AE lock
 				
 			}
@@ -169,6 +168,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				maxZoom = mOpenCvCameraView.getMaxZoom();
 				zoom = (maxZoom/30)*progress;
 				mOpenCvCameraView.setZoom(zoom);
+				//mOpenCvCameraView.setMacroFocus();
 			}
 			@Override
 			public void onStartTrackingTouch(SeekBar seekBar)
@@ -181,6 +181,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				Toast.makeText(TestActivity.this, "zoom:" + Integer.toString(zoom),
 						Toast.LENGTH_SHORT).show();
 			}
+			
 		});
 		//exposure settings
 		isoBar = (SeekBar) findViewById(R.id.seekbar_iso);
@@ -266,6 +267,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				}
 			}
 		}, 10, 10, TimeUnit.SECONDS);
+		/*
 		//capture button
 		Button captureButton = (Button)findViewById(R.id.button_capture);
 		captureButton.setOnClickListener(new View.OnClickListener() {
@@ -275,7 +277,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				mOpenCvCameraView.takePicture();
 				
 			}
-		});
+		});*/
 		
 		//calibration instructions
 		Toast inst_toast = Toast.makeText(TestActivity.this, "Select three points in each channel to calibrate",

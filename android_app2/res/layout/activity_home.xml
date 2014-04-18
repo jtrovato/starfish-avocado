@@ -18,21 +18,21 @@
     
     <Button 
         android:id="@+id/button_calibrate"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/calibrateButtonLabel" />
     
     <Button 
         android:id="@+id/button_test"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/testButtonLabel" />
     
     <Button 
         android:id="@+id/button_bluetooth"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/bluetoothButtonLabel" />

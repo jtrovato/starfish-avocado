@@ -82,7 +82,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="horizontal"
@@ -91,20 +91,21 @@
 
         <Button
             android:id="@+id/button_start"
-            android:layout_width="wrap_content"
+            android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_weight="0"
+            android:layout_weight="1"
             android:text="@string/startButtonLabel" />
 
         <Button
             android:id="@+id/button_stop"
-            android:layout_width="wrap_content"
+            android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_weight="0"
+            android:layout_weight="1"
             android:text="@string/stopButtonLabel" />
-
+        
+<!--  
         <Button
             android:id="@+id/button_capture"
             android:layout_width="wrap_content"
@@ -112,6 +113,7 @@
             android:layout_gravity="center"
             android:layout_weight="0"
             android:text="@string/captureButtonLabel" />
+-->
     </LinearLayout>
 
     <TextView

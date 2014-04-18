@@ -9,7 +9,7 @@
     <string name="startButtonLabel">Start</string>
     <string name="captureButtonLabel">Capture</string>
     <string name="title_activity_home">HomeActivity</string>
-    <string name="welcome">Welcome to the P2D2 device application!</string>
+    <string name="welcome">First, calibrate the device. Then click Test.</string>
     <string name="calibrateButtonLabel">Calibrate</string>
     <string name="testButtonLabel">Test</string>
     <string name="bluetoothButtonLabel">Connect to Bluetooth</string>

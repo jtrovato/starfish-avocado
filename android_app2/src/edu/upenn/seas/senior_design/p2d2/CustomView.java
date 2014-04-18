@@ -60,7 +60,11 @@ public class CustomView extends JavaCameraView {
 
     public void setMacroFocus(){
     	parameters = mCamera.getParameters();
+    	if(parameters == null)
+			Log.e(TAG, "getFocusModes returned null");
 		List<String> focusModes = parameters.getSupportedFocusModes(); //set focus to MACRO (close-up)
+		if(focusModes == null)
+			Log.e(TAG, "getFocusModes returned null");
 		if(focusModes.contains(Parameters.FOCUS_MODE_MACRO))
 		{
 			parameters.setFocusMode(Parameters.FOCUS_MODE_MACRO);

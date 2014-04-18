@@ -149,7 +149,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	protected void onResume()
 	{
 		super.onResume();
-		//OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_5,  this, mLoaderCallback);
+		//OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_5,  this, mLoaderCallback); //this call is called when activity starts and causes the app the crash
 	}
 	
 	@Override
@@ -170,7 +170,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////   Camera View Functions           /////////////////////////////////////////////////
-	/*
+	
     //display view on screen
   	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this){
   		@Override
@@ -191,7 +191,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
   			}break;
   			}
   		}
-  	};*/
+  	};
 /*
 	@Override
 	public void onCameraViewStarted(int width, int height) {
