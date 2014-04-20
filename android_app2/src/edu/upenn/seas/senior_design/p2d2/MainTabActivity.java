@@ -6,10 +6,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.OpenCVLoader;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
-import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -18,23 +18,30 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.SystemClock;
 import android.app.ActionBar;
 import android.app.DialogFragment;
 import android.app.FragmentTransaction;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.View.OnTouchListener;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.GraphView.GraphViewData;
+import com.jjoe64.graphview.GraphViewSeries;
+import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
+import com.jjoe64.graphview.LineGraphView;
 
 public class MainTabActivity extends FragmentActivity implements CvCameraViewListener2, OnTouchListener {
 	
@@ -82,6 +89,20 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	ArrayList<Mat> rgb_channels = new ArrayList<Mat>();
 	//store the fluo data
 	public ArrayList<int[]> fluo_data = new ArrayList<int[]>();
+	public ArrayList<Long> time_data = new ArrayList<Long>(); //in milliseconds
+	public ArrayList<GraphViewData> graph_data1 = new ArrayList<GraphViewData>();
+	//graph stuff
+	
+	public GraphViewData[] fluo_graph_data;// = new GraphViewData[]{};
+	public GraphViewSeries fluo_series1;// = new GraphViewSeries("Channel 1", new GraphViewSeriesStyle(Color.rgb(200, 50, 00),2), fluo_graph_data);
+	public GraphViewSeries fluo_series2;// = new GraphViewSeries("Channel 2", new GraphViewSeriesStyle(Color.rgb(90, 250, 00),2), fluo_graph_data);
+	public GraphViewSeries fluo_series3;// = new GraphViewSeries("Channel 3", new GraphViewSeriesStyle(Color.rgb(0, 50, 250),2), fluo_graph_data);
+	public GraphView fluo_graph;// = new LineGraphView(this, "Channel Fluorescence");
+
+	private int maxDataLen = 50000;
+	
+	int graph_frag_id;
+	GraphTab graph_fragment = (GraphTab)getSupportFragmentManager().findFragmentById(graph_frag_id);
 	
 	//constructor, necessary?
 	public MainTabActivity(){
@@ -144,8 +165,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			
 			public void onTabReselected(android.app.ActionBar.Tab tab,
 					FragmentTransaction ft) {
-				// TODO Auto-generated method stub
-				
+								
 			}
 
 			@Override
@@ -157,7 +177,6 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			@Override
 			public void onTabUnselected(android.app.ActionBar.Tab tab,
 					FragmentTransaction ft) {
-				// TODO Auto-generated method stub
 				
 			}};
 			//Add New Tab
@@ -188,6 +207,11 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 					}
 				}
 			}, 10, 10, TimeUnit.SECONDS);
+			
+			
+			//graph stuff in GraphTab
+
+			
 			
 			//instructions
 			testInstruction();
@@ -235,7 +259,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		@Override
 		public void run(){
 			timeInMilliseconds = SystemClock.uptimeMillis() - startTime;
-			updatedTime = timeSwapBuff + timeInMilliseconds;
+			updatedTime = timeSwapBuff + timeInMilliseconds; //in ms
 
 			int secs = (int)(updatedTime/1000);
 			int mins = secs/60;
@@ -297,11 +321,19 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		if(touch_count > 8) //if the calibration routine is complete
 		{
 			int[] fluo = ImageProc.getFluorescence(mRgba, channels);
+			//store data, graph prep
 			fluo_data.add(fluo);
-			int i =0;
+			time_data.add(updatedTime);
+			//graph_data1.add(new GraphViewData((double)time_data.get(time_data.size()-1),fluo_data.get(fluo_data.size()-1)[0]));
+			fluo_series1.appendData(new GraphViewData((double)updatedTime, fluo[0]), false, maxDataLen);
+			fluo_series2.appendData(new GraphViewData((double)updatedTime, fluo[1]), false, maxDataLen);
+			fluo_series3.appendData(new GraphViewData((double)updatedTime, fluo[2]), false, maxDataLen);
+			//graph_fragment.redrawAll(); //need this to plot the graph
+			
 			Log.i("fluorescence values", Double.toString(fluo[0]) + " " + Double.toString(fluo[1]) + " " + Double.toString(fluo[2]));
 			//outline ROI and Channels
 			Core.rectangle(mRgba, ROI.tl(),ROI.br(),new Scalar( 255, 0, 0 ),4,8, 0 );
+			int i =0;
 			for(Rect c : channels)
 			{
 				Core.rectangle(mRgba, c.tl(), c.br(), new Scalar( 0, 255, 0 ),2,8, 0 );
@@ -309,11 +341,6 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 					    Core.FONT_HERSHEY_COMPLEX, 0.8, new Scalar(200,200,250), 1);
 				i++;
 			}
-			//store the data
-			
-			
-			
-			
 		}
 		
 		//return rgb_channels.get(1); //display the green channel
