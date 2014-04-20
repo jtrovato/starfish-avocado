@@ -152,7 +152,7 @@ public class CustomView extends JavaCameraView {
 	    // using Environment.getExternalStorageState() before doing this.
 
 	    File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-	              Environment.DIRECTORY_PICTURES), "P2D2");
+	              Environment.DIRECTORY_PICTURES), "P2D2_" + new SimpleDateFormat("yyyy_MM_dd").format(new Date()));
 	    // This location works best if you want the created images to be shared
 	    // between applications and persist after your app has been uninstalled.
 

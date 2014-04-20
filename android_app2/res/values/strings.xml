@@ -36,6 +36,8 @@
         higlighted correctly, press "Start" </string>
     <string name="cal_check_title">How does it look?</string>
     <string name="cal_check_text">If the channels are highlighted, press "looks good". If not, please press "try again".</string>
+    <string name="result_instruction_title">All Done!</string>
+    <string name="result_instruction_text">Please have the final graph reviewed by a profession to verify the results </string>
     <string name="error_instruction_title">Oops. Something went wrong</string>
     <string name="error_instruction_text">We are not sure which instruction step you are at. Please start over. </string>
     

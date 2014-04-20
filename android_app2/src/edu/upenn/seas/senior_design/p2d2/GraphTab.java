@@ -23,7 +23,7 @@ public class GraphTab extends Fragment {
 	public int graph_frag_id;
 	Handler mHandler = new Handler();
 	
-	 Thread gupdate = new Thread(new Runnable() {
+	Thread gupdate = new Thread(new Runnable() {
 	        
 	        public void run() {
 	            // TODO Auto-generated method stub
@@ -45,29 +45,6 @@ public class GraphTab extends Fragment {
 	        }
         });
 	 
-	
-	/*
-	Runnable graphHandler = new Runnable() {
-        @Override
-        public void run() {
-            // TODO Auto-generated method stub
-            while (true) {
-                try {
-                    Thread.sleep(1000);
-                    mHandler.post(new Runnable() {
-
-                        @Override
-                        public void run() {
-                        	Log.d(TAG, "redrawing all");
-                            a.fluo_graph.redrawAll();
-                        }
-                    });
-                } catch (Exception e) {
-                    Log.d(TAG, "excpetion in the graph update handler");
-                }
-            }
-        }
-    };*/
 	
 	@Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,

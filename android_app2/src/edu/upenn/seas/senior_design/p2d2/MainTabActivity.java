@@ -113,7 +113,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	}
 	
 	//display view on screen
-	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this){
+	public BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this){
 		@Override
 		public void onManagerConnected(int status){
 			switch(status){
@@ -210,31 +210,24 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 					}
 				}
 			}, 10, 10, TimeUnit.SECONDS);
-			
-			
-			//graph stuff in GraphTab
 
-			
-			
-			//instructions
 			testInstruction();
-
-			
-
     }
     
     @Override
 	protected void onPause()
 	{
+    	Log.d(TAG, "onPause");
 		super.onPause();
-		if(mOpenCvCameraView != null)
-			mOpenCvCameraView.disableView();
+
 	}
 	@Override
 	protected void onResume()
 	{
+		Log.d(TAG, "onResume");
 		super.onResume();
-		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_5,  this, mLoaderCallback); //this call is called when activity starts and causes the app the crash
+		
+		
 	}
 	
 	@Override
@@ -341,8 +334,9 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 				
 			}
 			int[] fluo = ImageProc.getFluorescence(mRgba, channels);
-			if(updatedTime > ref_time+100)
+			if(updatedTime > ref_time+1000)
 			{
+				Log.d(TAG, "writing data");
 				//store data, graph prep
 				fluo_data.add(fluo);
 				time_data.add(updatedTime);

@@ -1,5 +1,7 @@
 package edu.upenn.seas.senior_design.p2d2;
 
+import org.opencv.android.OpenCVLoader;
+
 import android.app.DialogFragment;
 import android.content.Intent;
 import android.hardware.Camera;
@@ -12,9 +14,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.SeekBar.OnSeekBarChangeListener;
 
 public class TestTab extends Fragment implements InstructionsFragment.InstructionDialogListener{
 	
@@ -23,17 +25,21 @@ public class TestTab extends Fragment implements InstructionsFragment.Instructio
 	private MainTabActivity a;
 	
 	
-	
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-		View android = inflater.inflate(R.layout.test_frag, container, false);
-
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
 		a = (MainTabActivity)getActivity();
 		if(a==null)
 		{
 			Log.e(TAG, "getActivity returned null");
 		}
+	}
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+		View android = inflater.inflate(R.layout.test_frag, container, false);
 
 		//set up timer
 		a.timer_value = (TextView) android.findViewById(R.id.timer_value);
@@ -61,7 +67,9 @@ public class TestTab extends Fragment implements InstructionsFragment.Instructio
 				a.testInProgress = false;
 				//start the Results Activity using an intent
 				Intent resultsIntent = new Intent(a, ResultsActivity.class);
-				//myIntent.putExtra("key", value); //to pass info if needed
+				
+				resultsIntent.putExtra("fluo_data", a.fluo_data); //to pass info if needed
+				resultsIntent.putExtra("time_data", a.time_data);
 				a.startActivity(resultsIntent);
 			}
 		});
@@ -169,6 +177,41 @@ public class TestTab extends Fragment implements InstructionsFragment.Instructio
 	}
 
 
+    @Override
+	public void onPause()
+	{
+    	Log.d(TAG, "onPause");
+		if(a.mOpenCvCameraView != null)
+			a.mOpenCvCameraView.disableView();
+		super.onPause();
+
+	}
+	@Override
+	public void onResume()
+	{
+		Log.d(TAG, "onResume");
+		super.onResume();
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_5,  a, a.mLoaderCallback); //this call is called when activity starts and causes the app the crash
+		
+	}
+	
+	@Override
+	public void onStop()
+	{
+		Log.d(TAG, "onStop");
+		a.mOpenCvCameraView.disconnectCamera();
+		super.onStop();
+	}
+	
+	@Override
+	public void onDestroy()
+	{
+		super.onDestroy();
+		//mOpenCvCameraView.releaseCam();
+		if(a.mOpenCvCameraView != null)
+			a.mOpenCvCameraView.disableView();
+		
+	}
 
 	@Override
 	public void onDialogPositiveClick(DialogFragment dialog) {
