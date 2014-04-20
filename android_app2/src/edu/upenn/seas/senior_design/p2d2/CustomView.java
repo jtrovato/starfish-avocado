@@ -30,6 +30,14 @@ public class CustomView extends JavaCameraView {
     public CustomView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
+    public void init(int width, int height)
+    {
+    	connectCamera(width, height);
+    }
+    public void releaseCam()
+    {
+    	releaseCamera();
+    }
     
     @SuppressLint("NewApi")
 	public void lockCamera(){
@@ -60,7 +68,11 @@ public class CustomView extends JavaCameraView {
 
     public void setMacroFocus(){
     	parameters = mCamera.getParameters();
+    	if(parameters == null)
+			Log.e(TAG, "getFocusModes returned null");
 		List<String> focusModes = parameters.getSupportedFocusModes(); //set focus to MACRO (close-up)
+		if(focusModes == null)
+			Log.e(TAG, "getFocusModes returned null");
 		if(focusModes.contains(Parameters.FOCUS_MODE_MACRO))
 		{
 			parameters.setFocusMode(Parameters.FOCUS_MODE_MACRO);
@@ -79,6 +91,8 @@ public class CustomView extends JavaCameraView {
     	mCamera.setParameters(parameters);//actually set the parameters
     }
     public int getMaxZoom(){
+    	if(mCamera == null)
+    		Log.e(TAG, "mCamera is null");
     	parameters = mCamera.getParameters();
     	return parameters.getMaxZoom();
     }

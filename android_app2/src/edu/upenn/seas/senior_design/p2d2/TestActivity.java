@@ -20,6 +20,7 @@ import org.opencv.imgproc.Imgproc;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -83,7 +84,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 	private ArrayList<Rect> channels = new ArrayList<Rect>();
 	ArrayList<Mat> rgb_channels = new ArrayList<Mat>();
 	//store the fluo data
-	public ArrayList<int[]> fluo_data;
+	public ArrayList<int[]> fluo_data = new ArrayList<int[]>();
 	
 	//constructor, necessary?
 	public TestActivity(){
@@ -107,6 +108,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 			default:
 			{
 				super.onManagerConnected(status);
+				Log.d(TAG, "OpenCv was not laoded correctly");
 			}break;
 			}
 		}
@@ -135,7 +137,6 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				startTime = SystemClock.uptimeMillis();
 				customHandler.postDelayed(updateTimerThread, 0);
 			    testInProgress = true;
-				mOpenCvCameraView.setMacroFocus();
 			    mOpenCvCameraView.lockCamera(); //enable AWB and AE lock
 				
 			}
@@ -169,6 +170,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				maxZoom = mOpenCvCameraView.getMaxZoom();
 				zoom = (maxZoom/30)*progress;
 				mOpenCvCameraView.setZoom(zoom);
+				//mOpenCvCameraView.setMacroFocus();
 			}
 			@Override
 			public void onStartTrackingTouch(SeekBar seekBar)
@@ -181,6 +183,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				Toast.makeText(TestActivity.this, "zoom:" + Integer.toString(zoom),
 						Toast.LENGTH_SHORT).show();
 			}
+			
 		});
 		//exposure settings
 		isoBar = (SeekBar) findViewById(R.id.seekbar_iso);
@@ -266,6 +269,7 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				}
 			}
 		}, 10, 10, TimeUnit.SECONDS);
+		/*
 		//capture button
 		Button captureButton = (Button)findViewById(R.id.button_capture);
 		captureButton.setOnClickListener(new View.OnClickListener() {
@@ -275,15 +279,21 @@ public class TestActivity extends Activity implements CvCameraViewListener2, OnT
 				mOpenCvCameraView.takePicture();
 				
 			}
-		});
+		});*/
 		
 		//calibration instructions
-		Toast inst_toast = Toast.makeText(TestActivity.this, "Select three points in each channel to calibrate",
-				Toast.LENGTH_LONG);
-		inst_toast.setGravity(Gravity.TOP, 0, 0);
-		inst_toast.show();
+		testInstruction();
 		
 	} 
+	//instructions
+	private void testInstruction() {
+		DialogFragment testInstAlert = new InstructionsFragment().newInstance();
+		Bundle bundle = new Bundle();
+		bundle.putInt("inst", 1); //1 corresponds to test instructions
+		testInstAlert.setArguments(bundle);
+		testInstAlert.show(getFragmentManager(), "test_inst");
+	}
+
 
 	//this is a worker thread for the timer
 	private Runnable updateTimerThread = new Runnable(){

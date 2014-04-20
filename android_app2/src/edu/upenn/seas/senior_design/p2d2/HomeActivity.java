@@ -18,7 +18,7 @@ import android.view.View;
 import android.widget.Button;
 
 public class HomeActivity extends Activity implements
-		BTMenuDialogFragment.BTDialogListener {
+		BTMenuDialogFragment.BTDialogListener, InstructionsFragment.InstructionDialogListener {
 	// Button initializations
 	private Button testButton;
 	private Button calButton;
@@ -120,6 +120,7 @@ public class HomeActivity extends Activity implements
 				HomeActivity.this.startActivity(testIntent);
 			}
 		});
+		/*
 		// Bluetooth setup button
 		btButton = (Button) findViewById(R.id.button_bluetooth);
 		btButton.setOnClickListener(new View.OnClickListener() {
@@ -127,10 +128,20 @@ public class HomeActivity extends Activity implements
 			public void onClick(View view) {
 				showPopup();
 			}
-		});
+		}); */
 		isBTServiceConnected = false;
 		mBound = false;
 		manager = LocalBroadcastManager.getInstance(getApplicationContext());
+		
+		homeInstruction();
+	}
+	//instructions
+	private void homeInstruction() {
+		DialogFragment homeInstAlert = new InstructionsFragment().newInstance();
+		Bundle bundle = new Bundle();
+		bundle.putInt("inst", 0); //0 corresponds to home instructions
+		homeInstAlert.setArguments(bundle);
+		homeInstAlert.show(getFragmentManager(), "home_inst");
 	}
 
 	@Override
@@ -291,5 +302,15 @@ public class HomeActivity extends Activity implements
 			Log.e(BLUETOOTH_SERVICE, "Bad error intent reached processError()");
 			break;
 		}
+	}
+	@Override
+	public void onDialogPositiveClick(DialogFragment dialog) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void onDialogNegativeClick(DialogFragment dialog) {
+		// TODO Auto-generated method stub
+		
 	}
 }

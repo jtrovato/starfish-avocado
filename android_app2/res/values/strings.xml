@@ -9,9 +9,9 @@
     <string name="startButtonLabel">Start</string>
     <string name="captureButtonLabel">Capture</string>
     <string name="title_activity_home">HomeActivity</string>
-    <string name="welcome">Welcome to the P2D2 device application!</string>
-    <string name="calibrateButtonLabel">Calibrate</string>
-    <string name="testButtonLabel">Test</string>
+    <string name="home_title">Diagnostic Home</string>
+    <string name="calibrateButtonLabel">Step 1: Calibrate</string>
+    <string name="testButtonLabel">Step 2: Test</string>
     <string name="bluetoothButtonLabel">Connect to Bluetooth</string>
     <string name="zoom_bar_label">Zoom</string>
     <string name="iso_bar_label">Exposure</string>
@@ -27,7 +27,18 @@
     <string name="valves_test_text">Test Valves</string>
     <string name="calibrate_button_text">Test All</string>
     <string name="title_activity_calibrate_screen">Calibration Settings</string>
-
+    <string name="home_instruction_title">Calibrate the Device</string>
+    <string name="home_instruction_text">On the next screen please select "Calibrate" to calibrate the device components.
+        This step is necessary before the test can begin.</string>
+    <string name="test_instruction_title">Calibrate the Camera</string>
+    <string name="test_instruction_text">Adjust the camera parameters to best view the channels. Make sure they occupy a large part of the image. 
+        Next, please calibrate the image capture algorithm by tapping the top, middle, and bottom of each channel. If the channels are 
+        higlighted correctly, press "Start" </string>
+    <string name="cal_check_title">How does it look?</string>
+    <string name="cal_check_text">If the channels are highlighted, press "looks good". If not, please press "try again".</string>
+    <string name="error_instruction_title">Oops. Something went wrong</string>
+    <string name="error_instruction_text">We are not sure which instruction step you are at. Please start over. </string>
+    
     <string name="graph_text">Graph goes here</string>
     <string name="test_text">Test goes here</string>
     <string name="log_text">Logs go here</string>
