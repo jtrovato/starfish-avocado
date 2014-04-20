@@ -133,6 +133,8 @@ public class HomeActivity extends Activity implements
 		mBound = false;
 		manager = LocalBroadcastManager.getInstance(getApplicationContext());
 		
+		showPopup();
+		
 		homeInstruction();
 	}
 	//instructions
