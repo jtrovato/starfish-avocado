@@ -1,5 +1,6 @@
 package edu.upenn.seas.senior_design.p2d2;
 
+import android.app.DialogFragment;
 import android.content.Intent;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -15,7 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
-public class TestTab extends Fragment {
+public class TestTab extends Fragment implements InstructionsFragment.InstructionDialogListener{
 	
 	
 	private String TAG = "test tab";
@@ -165,6 +166,24 @@ public class TestTab extends Fragment {
 				});
 
 		return android; //cannot call getView() until this method returns
+	}
+
+
+
+	@Override
+	public void onDialogPositiveClick(DialogFragment dialog) {
+		a.cal = true;
+		a.boxup = false;
+		
+	}
+
+
+
+	@Override
+	public void onDialogNegativeClick(DialogFragment dialog) {
+		a.touch_count = 0;
+		a.boxup=false;
+		
 	}
 	
 	

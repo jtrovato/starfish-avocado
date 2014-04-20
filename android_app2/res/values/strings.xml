@@ -34,6 +34,8 @@
     <string name="test_instruction_text">Adjust the camera parameters to best view the channels. Make sure they occupy a large part of the image. 
         Next, please calibrate the image capture algorithm by tapping the top, middle, and bottom of each channel. If the channels are 
         higlighted correctly, press "Start" </string>
+    <string name="cal_check_title">How does it look?</string>
+    <string name="cal_check_text">If the channels are highlighted, press "looks good". If not, please press "try again".</string>
     <string name="error_instruction_title">Oops. Something went wrong</string>
     <string name="error_instruction_text">We are not sure which instruction step you are at. Please start over. </string>
     

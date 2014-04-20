@@ -18,7 +18,7 @@ import android.view.View;
 import android.widget.Button;
 
 public class HomeActivity extends Activity implements
-		BTMenuDialogFragment.BTDialogListener {
+		BTMenuDialogFragment.BTDialogListener, InstructionsFragment.InstructionDialogListener {
 	// Button initializations
 	private Button testButton;
 	private Button calButton;
@@ -302,5 +302,15 @@ public class HomeActivity extends Activity implements
 			Log.e(BLUETOOTH_SERVICE, "Bad error intent reached processError()");
 			break;
 		}
+	}
+	@Override
+	public void onDialogPositiveClick(DialogFragment dialog) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void onDialogNegativeClick(DialogFragment dialog) {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -43,7 +43,7 @@ import com.jjoe64.graphview.GraphViewSeries;
 import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
 import com.jjoe64.graphview.LineGraphView;
 
-public class MainTabActivity extends FragmentActivity implements CvCameraViewListener2, OnTouchListener {
+public class MainTabActivity extends FragmentActivity implements CvCameraViewListener2, OnTouchListener, InstructionsFragment.InstructionDialogListener {
 	
 	//static initalizer block  (runs when class is loaded)
 	static{
@@ -85,6 +85,8 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	public int x;
 	public int y;
 	public int touch_count = 0;
+	public boolean cal = false;
+	public boolean boxup = false;
 	public ArrayList<Rect> channels = new ArrayList<Rect>();
 	ArrayList<Mat> rgb_channels = new ArrayList<Mat>();
 	//store the fluo data
@@ -282,6 +284,14 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		testInstAlert.show(getFragmentManager(), "test_inst");
 		}
 	
+	private void imageCalInstruction() {
+		DialogFragment testInstAlert = new InstructionsFragment().newInstance();
+		Bundle bundle = new Bundle();
+		bundle.putInt("inst", 2); //2 corresponds to image cal
+		testInstAlert.setArguments(bundle);
+		testInstAlert.show(getFragmentManager(), "cal_inst");
+		}
+	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////   Camera View Functions           /////////////////////////////////////////////////
   	
@@ -318,8 +328,17 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		Mat ch_g = rgb_channels.get(1);
 		
 		
+	
+		
 		if(touch_count > 8) //if the calibration routine is complete
 		{
+			
+			if(cal == false && boxup == false)
+			{
+				boxup = true;
+				imageCalInstruction();
+				
+			}
 			int[] fluo = ImageProc.getFluorescence(mRgba, channels);
 			//store data, graph prep
 			fluo_data.add(fluo);
@@ -385,6 +404,22 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		touch_count++;
 		
 		return false;
+	}
+
+	@Override
+	public void onDialogPositiveClick(DialogFragment dialog) {
+		cal = true;
+		boxup = false;
+		
+	}
+
+
+
+	@Override
+	public void onDialogNegativeClick(DialogFragment dialog) {
+		touch_count = 0;
+		boxup=false;
+		
 	}
 	
     
