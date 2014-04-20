@@ -29,7 +29,7 @@ public class GraphTab extends Fragment {
 	            // TODO Auto-generated method stub
 	            while (true) {
 	                try {
-	                    //Thread.sleep(10000);
+	                    Thread.sleep(100);
 	                    mHandler.post(new Runnable() {
 
 	                        @Override
@@ -76,9 +76,9 @@ public class GraphTab extends Fragment {
 		a = (MainTabActivity)getActivity();
 		//graph stuff
 		a.fluo_graph_data = new GraphViewData[]{};
-		a.fluo_series1 = new GraphViewSeries("Channel 1", new GraphViewSeriesStyle(Color.rgb(200, 50, 00),2), a.fluo_graph_data);
-		a.fluo_series2 = new GraphViewSeries("Channel 2", new GraphViewSeriesStyle(Color.rgb(90, 250, 00),2), a.fluo_graph_data);
-		a.fluo_series3 = new GraphViewSeries("Channel 3", new GraphViewSeriesStyle(Color.rgb(0, 50, 250),2), a.fluo_graph_data);
+		a.fluo_series1 = new GraphViewSeries("Channel 1", new GraphViewSeriesStyle(Color.rgb(200, 50, 00),4), a.fluo_graph_data);
+		a.fluo_series2 = new GraphViewSeries("Channel 2", new GraphViewSeriesStyle(Color.rgb(90, 250, 00),4), a.fluo_graph_data);
+		a.fluo_series3 = new GraphViewSeries("Channel 3", new GraphViewSeriesStyle(Color.rgb(0, 50, 250),4), a.fluo_graph_data);
 		a.fluo_graph = new LineGraphView(a, "Channel Fluorescence");
 		a.fluo_graph.addSeries(a.fluo_series1);
 		a.fluo_graph.addSeries(a.fluo_series2);
@@ -86,6 +86,8 @@ public class GraphTab extends Fragment {
 		a.fluo_graph.setShowLegend(true); 
 		a.fluo_graph.setLegendAlign(LegendAlign.BOTTOM);
 		a.fluo_graph.setLegendWidth(200);
+		a.fluo_graph.getGraphViewStyle().setNumHorizontalLabels(5);
+		a.fluo_graph.getGraphViewStyle().setNumVerticalLabels(8);
 		
 		
 		

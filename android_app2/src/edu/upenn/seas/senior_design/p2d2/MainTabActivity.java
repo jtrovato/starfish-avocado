@@ -71,6 +71,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	public long timeInMilliseconds = 0L;
 	public long timeSwapBuff = 0L;
 	public long updatedTime = 0L;
+	public long ref_time;
 	//scheduler stuff
 	public boolean testInProgress = false;
 	public ScheduledExecutorService  scheduleTaskExecutor;
@@ -188,7 +189,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			
 			//opencv camera view is implemented in TestTab()
 			
-			
+			ref_time = updatedTime;
 			//scheduled executor to take pictures at a certain rate.
 			scheduleTaskExecutor = Executors.newScheduledThreadPool(5);
 			scheduleTaskExecutor.scheduleAtFixedRate(new Runnable(){
@@ -340,16 +341,21 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 				
 			}
 			int[] fluo = ImageProc.getFluorescence(mRgba, channels);
-			//store data, graph prep
-			fluo_data.add(fluo);
-			time_data.add(updatedTime);
-			//graph_data1.add(new GraphViewData((double)time_data.get(time_data.size()-1),fluo_data.get(fluo_data.size()-1)[0]));
-			fluo_series1.appendData(new GraphViewData((double)updatedTime, fluo[0]), false, maxDataLen);
-			fluo_series2.appendData(new GraphViewData((double)updatedTime, fluo[1]), false, maxDataLen);
-			fluo_series3.appendData(new GraphViewData((double)updatedTime, fluo[2]), false, maxDataLen);
-			//graph_fragment.redrawAll(); //need this to plot the graph
-			
-			Log.i("fluorescence values", Double.toString(fluo[0]) + " " + Double.toString(fluo[1]) + " " + Double.toString(fluo[2]));
+			if(updatedTime > ref_time+100)
+			{
+				//store data, graph prep
+				fluo_data.add(fluo);
+				time_data.add(updatedTime);
+				//graph_data1.add(new GraphViewData((double)time_data.get(time_data.size()-1),fluo_data.get(fluo_data.size()-1)[0]));
+				fluo_series1.appendData(new GraphViewData((double)updatedTime/1000, fluo[0]), false, maxDataLen);
+				fluo_series2.appendData(new GraphViewData((double)updatedTime/1000, fluo[1]), false, maxDataLen);
+				fluo_series3.appendData(new GraphViewData((double)updatedTime/1000, fluo[2]), false, maxDataLen);
+				//graph_fragment.redrawAll(); //need this to plot the graph
+
+				Log.i("fluorescence values", Double.toString(fluo[0]) + " " + Double.toString(fluo[1]) + " " + Double.toString(fluo[2]));
+				ref_time=updatedTime;
+				
+			}
 			//outline ROI and Channels
 			Core.rectangle(mRgba, ROI.tl(),ROI.br(),new Scalar( 255, 0, 0 ),4,8, 0 );
 			int i =0;
