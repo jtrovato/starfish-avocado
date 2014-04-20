@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DialogFragment;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -65,11 +66,6 @@ public class CalibrateActivity extends Activity {
 			// unused
 		}
 
-		private void btNotConnected() {
-			DialogFragment btAlertFragment = new AlertDialogFragmentBT()
-					.newInstance();
-			btAlertFragment.show(getFragmentManager(), "no_BT");
-		}
 	};
 
 	private final BroadcastReceiver mBTDataReceiver = new BroadcastReceiver() {
@@ -106,6 +102,20 @@ public class CalibrateActivity extends Activity {
 			}
 		}
 	};
+	
+	private final BroadcastReceiver mBTDisconnectReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			btNotConnected();
+		}
+	};
+	
+	private void btNotConnected() {
+		new AlertDialogFragmentBT();
+		DialogFragment btAlertFragment = AlertDialogFragmentBT
+				.newInstance();
+		btAlertFragment.show(getFragmentManager(), "no_BT");
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -172,6 +182,11 @@ public class CalibrateActivity extends Activity {
 		IntentFilter stopFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_STOP);
 		manager.registerReceiver(mBTStopReceiver, stopFilter);
+		
+		// Receiver for BT Disconnect
+		IntentFilter disconnectFilter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+		disconnectFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+		registerReceiver(mBTDisconnectReceiver, disconnectFilter);
 
 	}// end of onCreate()
 

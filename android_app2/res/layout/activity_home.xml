@@ -32,12 +32,11 @@
 	        android:text="@string/testButtonLabel"
 	        android:textSize="20sp" />
     
-    <!--  
+  
     <Button 
         android:id="@+id/button_bluetooth"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/bluetoothButtonLabel" />
-	-->
 </LinearLayout>

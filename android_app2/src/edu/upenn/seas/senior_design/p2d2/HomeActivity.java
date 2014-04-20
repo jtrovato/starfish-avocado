@@ -3,6 +3,7 @@ package edu.upenn.seas.senior_design.p2d2;
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -18,7 +19,8 @@ import android.view.View;
 import android.widget.Button;
 
 public class HomeActivity extends Activity implements
-		BTMenuDialogFragment.BTDialogListener, InstructionsFragment.InstructionDialogListener {
+		BTMenuDialogFragment.BTDialogListener,
+		InstructionsFragment.InstructionDialogListener {
 	// Button initializations
 	private Button testButton;
 	private Button calButton;
@@ -91,11 +93,24 @@ public class HomeActivity extends Activity implements
 		}
 	};
 
+	private final BroadcastReceiver mBTDisconnectReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			btNotConnected();
+		}
+	};
+
+	private void btNotConnected() {
+		new AlertDialogFragmentBT();
+		DialogFragment btAlertFragment = AlertDialogFragmentBT.newInstance();
+		btAlertFragment.show(getFragmentManager(), "no_BT");
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_home);
-		
+
 		// test button
 		testButton = (Button) findViewById(R.id.button_test);
 		testButton.setOnClickListener(new View.OnClickListener() {
@@ -120,7 +135,7 @@ public class HomeActivity extends Activity implements
 				HomeActivity.this.startActivity(testIntent);
 			}
 		});
-		/*
+
 		// Bluetooth setup button
 		btButton = (Button) findViewById(R.id.button_bluetooth);
 		btButton.setOnClickListener(new View.OnClickListener() {
@@ -128,20 +143,25 @@ public class HomeActivity extends Activity implements
 			public void onClick(View view) {
 				showPopup();
 			}
-		}); */
+		});
 		isBTServiceConnected = false;
 		mBound = false;
 		manager = LocalBroadcastManager.getInstance(getApplicationContext());
-		
-		showPopup();
-		
+
+		// Receiver for BT Disconnect
+		IntentFilter disconnectFilter = new IntentFilter(
+				BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+		disconnectFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+		registerReceiver(mBTDisconnectReceiver, disconnectFilter);
+
 		homeInstruction();
 	}
-	//instructions
+
+	// instructions
 	private void homeInstruction() {
 		DialogFragment homeInstAlert = new InstructionsFragment().newInstance();
 		Bundle bundle = new Bundle();
-		bundle.putInt("inst", 0); //0 corresponds to home instructions
+		bundle.putInt("inst", 0); // 0 corresponds to home instructions
 		homeInstAlert.setArguments(bundle);
 		homeInstAlert.show(getFragmentManager(), "home_inst");
 	}
@@ -305,14 +325,16 @@ public class HomeActivity extends Activity implements
 			break;
 		}
 	}
+
 	@Override
 	public void onDialogPositiveClick(DialogFragment dialog) {
 		// TODO Auto-generated method stub
-		
+
 	}
+
 	@Override
 	public void onDialogNegativeClick(DialogFragment dialog) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }
