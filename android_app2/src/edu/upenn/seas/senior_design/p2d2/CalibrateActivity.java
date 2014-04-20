@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DialogFragment;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -28,6 +29,9 @@ import android.widget.AdapterView.OnItemClickListener;
 
 public class CalibrateActivity extends Activity {
 	private LocalBroadcastManager manager;
+	private int tempCount;
+	private int tempInitial;
+	private int temp;
 
 	// adapter is passed to ListView in order to initialize it
 	ActionArrayAdapter adapter;
@@ -62,11 +66,6 @@ public class CalibrateActivity extends Activity {
 			// unused
 		}
 
-		private void btNotConnected() {
-			DialogFragment btAlertFragment = new AlertDialogFragmentBT()
-					.newInstance();
-			btAlertFragment.show(getFragmentManager(), "no_BT");
-		}
 	};
 
 	private final BroadcastReceiver mBTDataReceiver = new BroadcastReceiver() {
@@ -103,9 +102,27 @@ public class CalibrateActivity extends Activity {
 			}
 		}
 	};
+	
+	private final BroadcastReceiver mBTDisconnectReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			btNotConnected();
+		}
+	};
+	
+	private void btNotConnected() {
+		new AlertDialogFragmentBT();
+		DialogFragment btAlertFragment = AlertDialogFragmentBT
+				.newInstance();
+		btAlertFragment.show(getFragmentManager(), "no_BT");
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		tempCount = 0;
+		tempInitial = -1;
+		temp = -1;
+
 		Log.i(TAG, "onCreate()");
 
 		super.onCreate(savedInstanceState);
@@ -165,6 +182,11 @@ public class CalibrateActivity extends Activity {
 		IntentFilter stopFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_STOP);
 		manager.registerReceiver(mBTStopReceiver, stopFilter);
+		
+		// Receiver for BT Disconnect
+		IntentFilter disconnectFilter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+		disconnectFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+		registerReceiver(mBTDisconnectReceiver, disconnectFilter);
 
 	}// end of onCreate()
 
@@ -275,10 +297,6 @@ public class CalibrateActivity extends Activity {
 		byte[] turnOff = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x3C,
 				(byte) 0x00 };
 
-		/*
-		 * if (list.get(0).testPassed()) { bytes[4] = (byte) 0x00; }
-		 */
-
 		mBTService.writeToBT(turnOn);
 		mBTService.writeToBT(check);
 
@@ -301,8 +319,6 @@ public class CalibrateActivity extends Activity {
 		byte[] check = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0xFF,
 				(byte) 0x8F };
 
-		// if (list.get(1).testPassed()) { bytes[4] = (byte) 0x00; }
-
 		mBTService.writeToBT(check);
 
 		int count = 0;
@@ -315,23 +331,55 @@ public class CalibrateActivity extends Activity {
 			} catch (InterruptedException e) {}
 			count++;
 		}
-		
+
 		return list.get(1).testPassed();
 	}
 
 	public boolean heatTest() {
-		byte[] bytes = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x57,
+		byte[] checkTemp = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01,
+				(byte) 0xFF, (byte) 0x6A };
+		byte[] checkHeatingStatus = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01,
+				(byte) 0x57, (byte) 0x57 };
+		byte[] turnOn = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x57,
 				(byte) 0x33 };
+		byte[] turnOff = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x57,
+				(byte) 0x00 };
+		tempInitial = -1;
 
-		if (list.get(2).testPassed()) {
-			bytes[4] = (byte) 0x00;
+		int count = 0;
+		while (tempInitial == -1) {
+			if (count > 10) {
+				break;
+			}
+			mBTService.writeToBT(checkTemp);
+
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {}
+			mBTService.writeToBT(checkHeatingStatus);
+			count++;
 		}
 
-		mBTService.writeToBT(bytes);
+		mBTService.writeToBT(turnOn);
 
-		list.get(2).setTestResult(!list.get(2).testPassed());
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {}
 
-		return list.get(2).testPassed();
+		count = 0;
+		while (!list.get(0).testPassed()) {
+			mBTService.writeToBT(checkTemp);
+			if (count > 30) {
+				break;
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {}
+			count++;
+		}
+
+		mBTService.writeToBT(turnOff);
+		return list.get(0).testPassed();
 	}
 
 	/***************************************************************************
@@ -346,8 +394,12 @@ public class CalibrateActivity extends Activity {
 		}
 		byte dataTwo = intent.getByteExtra(getString(R.string.bt_data_2),
 				(byte) 0xFF);
-		int tempData = dataOne * 256 + dataTwo;
-		String tempDataString = Integer.toString(tempData);
+		temp = dataOne * 256 + dataTwo;
+		if (tempCount == 0) {
+			tempCount++;
+			tempInitial = temp;
+		}
+		String tempDataString = Integer.toString(temp);
 		Log.i(BLUETOOTH_SERVICE, "Temperature = " + tempDataString + " Celcius");
 	}
 
@@ -356,30 +408,45 @@ public class CalibrateActivity extends Activity {
 				(byte) 0xFA);
 		switch (dataOne) {
 		case (byte) 0x00:
+			list.get(2).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Heating state: Stopped");
 			break;
 		case (byte) 0x31:
+			if (tempInitial == -1 || temp == -1) {
+				list.get(2).setTestResult(false);
+			} else if (temp >= tempInitial + 5) {
+				list.get(2).setTestResult(true);
+			} else {
+				list.get(2).setTestResult(false);
+			}
 			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 1");
 			break;
 		case (byte) 0x33:
+			list.get(2).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 1");
 			break;
 		case (byte) 0x51:
+			list.get(2).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 2");
 			break;
 		case (byte) 0x55:
+			list.get(2).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 2");
 			break;
 		case (byte) 0x62:
+			list.get(2).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 3");
 			break;
 		case (byte) 0x66:
+			list.get(2).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 3");
 			break;
 		case (byte) 0xF7:
+			list.get(2).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Heating state: Heating to Temp 4");
 			break;
 		case (byte) 0xFF:
+			list.get(2).setTestResult(false);
 			Log.i(BLUETOOTH_SERVICE, "Heating state: Heated to Temp 4");
 			break;
 		default:
