@@ -16,6 +16,7 @@ android_app2/gen/*
 android_app2/bin/*
 android_app2/.settings
 android_app2/project.properties
+*.csv
 
 # Temporary Files #
 ~$*
