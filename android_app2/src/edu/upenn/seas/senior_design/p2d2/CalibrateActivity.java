@@ -193,6 +193,9 @@ public class CalibrateActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		unbindService(mConnection);
+		manager.unregisterReceiver(mBTDataReceiver);
+		manager.unregisterReceiver(mBTStopReceiver);
+		unregisterReceiver(mBTDisconnectReceiver);
 		super.onDestroy();
 	}
 

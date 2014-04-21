@@ -146,13 +146,6 @@ public class HomeActivity extends Activity implements
 		});
 		isBTServiceConnected = false;
 		mBound = false;
-		manager = LocalBroadcastManager.getInstance(getApplicationContext());
-
-		// Receiver for BT Disconnect
-		IntentFilter disconnectFilter = new IntentFilter(
-				BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
-		disconnectFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-		registerReceiver(mBTDisconnectReceiver, disconnectFilter);
 
 		homeInstruction();
 	}
@@ -170,6 +163,35 @@ public class HomeActivity extends Activity implements
 	protected void onDestroy() {
 		super.onDestroy();
 	};
+
+	@Override
+	protected void onResume() {
+		manager = LocalBroadcastManager.getInstance(getApplicationContext());
+		
+		// Receiver for data
+				IntentFilter dataFilter = new IntentFilter(
+						BTConnectionService.ACTION_BT_RECIEVED);
+				manager.registerReceiver(mBTDataReceiver, dataFilter);
+				// Receiver for stopping service
+				IntentFilter stopFilter = new IntentFilter(
+						BTConnectionService.ACTION_BT_STOP);
+				manager.registerReceiver(mBTStopReceiver, stopFilter);
+
+		// Receiver for BT Disconnect
+		IntentFilter disconnectFilter = new IntentFilter(
+				BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+		disconnectFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+		registerReceiver(mBTDisconnectReceiver, disconnectFilter);
+		super.onResume();
+	}
+
+	@Override
+	protected void onPause() {
+		unregisterReceiver(mBTDisconnectReceiver);
+		manager.unregisterReceiver(mBTDataReceiver);
+		manager.unregisterReceiver(mBTStopReceiver);
+		super.onPause();
+	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -206,20 +228,11 @@ public class HomeActivity extends Activity implements
 			mBTService.closeConnection();
 			unbindService(mConnection);
 			isBTServiceConnected = false;
-			manager.unregisterReceiver(mBTDataReceiver);
-			manager.unregisterReceiver(mBTStopReceiver);
 		}
 		Intent intent = new Intent(this, BTConnectionService.class);
 		mBound = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 		// Register Broadcast receivers for BT Service
-		// Receiver for data
-		IntentFilter dataFilter = new IntentFilter(
-				BTConnectionService.ACTION_BT_RECIEVED);
-		manager.registerReceiver(mBTDataReceiver, dataFilter);
-		// Receiver for stopping service
-		IntentFilter stopFilter = new IntentFilter(
-				BTConnectionService.ACTION_BT_STOP);
-		manager.registerReceiver(mBTStopReceiver, stopFilter);
+		
 	}
 
 	/***************************************************************************

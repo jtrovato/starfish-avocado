@@ -199,7 +199,7 @@ public class TestTab extends Fragment implements InstructionsFragment.Instructio
 	public void onStop()
 	{
 		Log.d(TAG, "onStop");
-		a.mOpenCvCameraView.disconnectCamera();
+		//a.mOpenCvCameraView.disconnectCamera();
 		super.onStop();
 	}
 	
