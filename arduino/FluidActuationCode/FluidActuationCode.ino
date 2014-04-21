@@ -48,8 +48,8 @@
   unsigned long actuationTimer = 0;
   
   // Time for each actuation stage in seconds
-  const int FTAValveTime = 60;
-  const int FTAPumpTime = 60;
+  const int FTAValveTime = 10;
+  const int FTAPumpTime = 10;
   const int LampValveTime = 20;
   const int LampPumpTime = 10;
   
@@ -136,7 +136,7 @@
         case 1: 
           //Just started - switch on FTA valve, wait for some time, move to stage 1        
           digitalWrite(FTAValvePin,1);
-          if((millis()-actuationTimer)>=(1000*FTAValveTime/2)){
+          if((millis()-actuationTimer)>=(1000L*FTAValveTime/2)){
             actuationStage++;
             actuationTimer = millis();
           }
