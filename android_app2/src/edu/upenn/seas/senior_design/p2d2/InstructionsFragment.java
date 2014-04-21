@@ -102,7 +102,20 @@ public class InstructionsFragment extends DialogFragment {
 			else if(inst == 3)
 			{
 				return new AlertDialog.Builder(getActivity())
-				.setTitle(getString(R.string.result_instruction_title))
+				.setTitle(getString(R.string.pos_result_instruction_title))
+				.setMessage(getString(R.string.result_instruction_text))
+				.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dismiss();
+					}
+				})
+				.create();
+			}
+			else if(inst == 4)
+			{
+				return new AlertDialog.Builder(getActivity())
+				.setTitle(getString(R.string.neg_result_instruction_title))
 				.setMessage(getString(R.string.result_instruction_text))
 				.setNeutralButton("OK", new DialogInterface.OnClickListener() {
 					@Override

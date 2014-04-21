@@ -21,23 +21,35 @@ import edu.upenn.seas.senior_design.p2d2.InstructionsFragment.InstructionDialogL
 public class ResultsActivity extends Activity implements InstructionDialogListener{
 	
 	private String TAG = "Results Activity";
+	private ArrayList<int[]> fluo_data;
+	ArrayList<Long> time_data;
+	int[] channel1;
+	int[] channel2;
+	int[] channel3;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_results);
 		Bundle extra = this.getIntent().getExtras();
-		ArrayList<int[]> fluo_data = (ArrayList<int[]>)extra.get("fluo_data");
-		ArrayList<Long> time_data = (ArrayList<Long>)extra.get("time_data");
+		fluo_data = (ArrayList<int[]>)extra.get("fluo_data");
+		time_data = (ArrayList<Long>)extra.get("time_data");
 		GraphViewData[] data0 = new GraphViewData[time_data.size()];
 		GraphViewData[] data1 = new GraphViewData[time_data.size()];
 		GraphViewData[] data2 = new GraphViewData[time_data.size()];
+		channel1 = new int[fluo_data.size()];
+		channel2 = new int[fluo_data.size()];
+		channel3 = new int[fluo_data.size()];
 
 		for(int i = 0; i < time_data.size(); i++)
 		{
+			
 			data0[i] = new GraphViewData(time_data.get(i), fluo_data.get(i)[0]);
 			data1[i] = new GraphViewData(time_data.get(i), fluo_data.get(i)[1]);
 			data2[i] = new GraphViewData(time_data.get(i), fluo_data.get(i)[2]);
+			channel1[i] = fluo_data.get(i)[0];
+			channel2[i] = fluo_data.get(i)[1];
+			channel3[i] = fluo_data.get(i)[2];
 
 		}
 		
@@ -60,7 +72,9 @@ public class ResultsActivity extends Activity implements InstructionDialogListen
         	Log.e(TAG, "the graphView is null");
         graph_layout.addView(fluo_graph);
         
-        resultInstruction();
+        boolean result = determineResult();
+        
+        resultInstruction(result);
 	}
 
 	@Override
@@ -70,10 +84,41 @@ public class ResultsActivity extends Activity implements InstructionDialogListen
 		return true;
 	}
 	
-	private void resultInstruction() {
+	private boolean determineResult()
+	{
+		double thres = 1.25; //
+		double result1 = mean(channel1)/mean(channel3);
+		double result2 = mean(channel2)/mean(channel3);
+		if(result1>thres || result2>thres)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	private double mean(int[] in)
+	{
+		int sum = 0;
+		for(int cur : in)
+		{
+			sum += cur;
+		}
+		return sum/in.length;
+		
+	}
+	
+	private void resultInstruction(boolean result) {
 		DialogFragment resultInstAlert = new InstructionsFragment().newInstance();
 		Bundle bundle = new Bundle();
-		bundle.putInt("inst", 3); //3 corresponds to result instructions
+		if(result)
+		{
+			bundle.putInt("inst", 3); //3 corresponds to positive result instructions
+		}else{
+			bundle.putInt("inst", 4); //4 corresponds to negative result instructions
+		}
 		resultInstAlert.setArguments(bundle);
 		resultInstAlert.show(getFragmentManager(), "result_inst");
 		}
