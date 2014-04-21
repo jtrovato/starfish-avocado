@@ -97,13 +97,14 @@ const int pumpLAMP = 150;
 int actuationStage = 0;
 unsigned long actuationTimer = 0;
 
-
-
 // Time for each actuation stage in seconds
-const int FTAValveTime = 60;
-const int FTAPumpTime = 60;
-const int LampValveTime = 20;
+const int FTAValveTime = 10;
+const int FTAPumpTime = 10;
+const int LampValveTime = 10;
 const int LampPumpTime = 10;
+
+int debug = 1;
+
 
 
 Adafruit_MAX31855 thermocouple(thermoCLK, thermoCS, thermoDO);
@@ -205,9 +206,15 @@ void loop(){
   }
   //////////////////////////////   Fluid Actuation    ///////////////////////////////////////////
   if(actuating){ 
+    if(debug == 0)
+    {
       fluidActuation();
+    }else if(debug == 1)
+    {
+      delay(3000);
+      FluidActuationEnd();
+    }
   }
-  
   
   // Pump Code
   if(pumpTest){
@@ -253,11 +260,12 @@ void FluidActuationEnd(){
 }
 void fluidActuation()
 {
+  
   switch(actuationStage){
       case 1: 
           //Just started - switch on FTA valve, wait for some time, move to stage 1        
           digitalWrite(FTAValvePin,1);
-          if((millis()-actuationTimer)>=(1000*FTAValveTime/2)){
+          if((millis()-actuationTimer)>=(1000L*FTAValveTime/2)){
             actuationStage++;
             actuationTimer = millis();
           }
