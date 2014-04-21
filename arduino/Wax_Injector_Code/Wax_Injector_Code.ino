@@ -18,7 +18,7 @@ const int pumpPin = 10;
 const int potPin = A5;
 const int led = 13;
 
-int heatMax = 100;
+int heatMax = 200;
 int heatPower = 0;
 int potValue = 0;
 int boostDelay = 5; //boost time in seconds

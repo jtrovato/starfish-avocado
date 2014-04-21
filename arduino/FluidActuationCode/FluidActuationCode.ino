@@ -48,8 +48,8 @@
   unsigned long actuationTimer = 0;
   
   // Time for each actuation stage in seconds
-  const int FTAValveTime = 60;
-  const int FTAPumpTime = 60;
+  const int FTAValveTime = 10;
+  const int FTAPumpTime = 10;
   const int LampValveTime = 20;
   const int LampPumpTime = 10;
   
