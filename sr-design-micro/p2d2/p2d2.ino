@@ -45,7 +45,7 @@ boolean stable = false;
 boolean pumpTest = true;
 
 const int thermoDO = 2;
-const int thermoCS = 2;
+const int thermoCS = 3;
 const int thermoCLK = 4;
 const int heatPin = 11;
 const int pumpPin = 9;
