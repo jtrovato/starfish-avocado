@@ -87,7 +87,7 @@ void setup()
   pinMode(heatPin,OUTPUT);
   pinMode(pumpPin,OUTPUT);
   Serial.begin(9600);
-  Serial.println("P2D2 PumpHeaterCode");
+  Serial.println("P2D2 Process Monitoring:");
   // wait for MAX chip to stabilize
   delay(250); // delay 500 ms
 
@@ -182,7 +182,7 @@ void loop(){
     //SerialPrintData();
     dataPrintCounter = 0;
   }
-  Serial.println(dataPrintCounter);
+  //Serial.println(dataPrintCounter);
 
   // If bluetooth receiverd at least minPacketSize characters
   if(bluetooth.available() >= minPacketSize)  
@@ -257,10 +257,10 @@ void status_requests(int cmd){
 void heating_commands(int cmd){
   Serial.println("Heating command");
   switch(cmd){
-  case HEAT_TEMP_1:
+  case HEAT_TEMP_1: //this is our nominal testing value
     {
       //Start/switch heating-- temp 1
-      Serial.println("Start/switch heating-- temp 1");
+      Serial.println("Start/switch heating-- temp 1 - LAMP temp");
       break;  
     }
   case HEAT_TEMP_2:
@@ -297,11 +297,11 @@ void heating_commands(int cmd){
 // Processes LED commands received over bluetooth
 void led_command(int cmd){
   if (cmd == LED_ON){
-    //Serial.print("//Leds on\r\n");
+    Serial.print("//Leds on\r\n");
     digitalWrite(led,HIGH);
   }
   else if(cmd == LED_OFF){
-    //Serial.print("//Leds off\r\n");
+    Serial.print("//Leds off\r\n");
     digitalWrite(led,LOW);
   }
 }  
@@ -310,11 +310,17 @@ void led_command(int cmd){
 void fluids_command(int cmd){
   if (cmd == FLUIDS_ACTUATE){
     //Start fluids actuation
-    //Serial.print("Start fluids actuation");
+    Serial.println("Start fluid actuation");
+    delay(5000); //replace with actuall function later
+    Serial.println("fluid actuation complete");
+    fluid_state = FLUIDS_ACTUATED;
+    
+    
   }
   else if(cmd == FLUIDS_STOP){
+    //probably not going to do anything here because the fluids automatically stop when the FA function returns.
     //Stop fluids actuation
-    //Serial.print("Stop fluids actuation");
+    //Serial.print("Stop fluid actuation");
   }
 }  
 
