@@ -28,7 +28,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -49,8 +48,6 @@ import android.widget.TextView;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphView.GraphViewData;
 import com.jjoe64.graphview.GraphViewSeries;
-import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
-import com.jjoe64.graphview.LineGraphView;
 
 public class MainTabActivity extends FragmentActivity implements CvCameraViewListener2, OnTouchListener, InstructionsFragment.InstructionDialogListener {
 	
@@ -116,6 +113,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	GraphTab graph_fragment = (GraphTab)getSupportFragmentManager().findFragmentById(graph_frag_id);
 	// Device stuff
 	protected boolean actuated=false;
+	DialogFragment actuationInstAlert;
 	
 	
 	//constructor, necessary?
@@ -299,7 +297,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 				}
 			}, 10, 10, TimeUnit.SECONDS);
 
-			testInstruction();
+			
 			
 			// Bind to BT Connection
 			Intent intent = new Intent(this, BTConnectionService.class);
@@ -320,6 +318,8 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			IntentFilter disconnectFilter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
 			disconnectFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
 			registerReceiver(mBTDisconnectReceiver, disconnectFilter);
+			
+			actuationInstruction();
     }
     
     @Override
@@ -398,6 +398,13 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		testInstAlert.show(getFragmentManager(), "cal_inst");
 		}
 	
+	private void actuationInstruction() {
+		actuationInstAlert = new InstructionsFragment().newInstance();
+		Bundle bundle = new Bundle();
+		bundle.putInt("inst", 5); //5 corresponds to actuation
+		actuationInstAlert.setArguments(bundle);
+		actuationInstAlert.show(getFragmentManager(), "act_inst");
+		}
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////   Camera View Functions           /////////////////////////////////////////////////
   	
@@ -618,6 +625,9 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			break;
 		case (byte) 0xFF:
 			Log.i(BLUETOOTH_SERVICE, "Fluids: already actuated");
+			actuated = true;
+			actuationInstAlert.dismiss();
+			testInstruction();
 			break;
 		default:
 			Log.e(BLUETOOTH_SERVICE,
@@ -637,5 +647,23 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			Log.e(BLUETOOTH_SERVICE, "Bad error intent reached processError()");
 			break;
 		}
+	}
+	
+	private class ActuatedListener implements Runnable {
+
+		@Override
+		public void run() {
+			byte[] check = {(byte)0xB8, (byte)0xD3, (byte)0x01, (byte)0xFF, (byte)0x8F};
+			while(!actuated){
+				mBTService.writeToBT(check);
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
 	}
 }

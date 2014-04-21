@@ -41,6 +41,8 @@
     <string name="result_instruction_text">Please have the final graph reviewed by a profession to verify the results </string>
     <string name="error_instruction_title">Oops. Something went wrong</string>
     <string name="error_instruction_text">We are not sure which instruction step you are at. Please start over. </string>
+    <string name="actuation_instruction_title">Please wait...</string>
+    <string name="actuation_instruction_text">Fluid actuation in process, the test will begin shortly.</string>
     
     <string name="graph_text">Graph goes here</string>
     <string name="test_text">Test goes here</string>
