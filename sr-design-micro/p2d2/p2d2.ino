@@ -37,8 +37,8 @@ const int thermoCS = 3;
 const int thermoCLK = 4;
 
 //Fluid Actuation
-const int valveFTA = 12; //FTA Wash
-const int valveLAMP = 13; //LAMP/P5
+const int FTAValvePin = 12; //FTA Wash
+const int LampValvePin = 13; //LAMP/P5
 const int pumpPin = 9;
 const int potPin = A5;
 const int led = 8;
@@ -62,19 +62,11 @@ boolean heatingOn = false;
 boolean stable = false;
 boolean pumpTest = true;
 
-const int thermoDO = 2;
-const int thermoCS = 3;
-const int thermoCLK = 4;
-const int heatPin = 11;
-const int pumpPin = 9;
-//const int potPin = A5;
-const int led = 8;
-
 int heatMax = 255;
 int heatPower = 0;
 int potValue = 0;
 int boostDelay = 5; //boost time in seconds
-double dataPrintCounter = 0;
+double FAPrintCounter = 0;
 
 double kp = 8; //Proportional gain
 double ki = 0.05; //Integral gain
@@ -99,7 +91,7 @@ int pumpPower = 0;
 // Power Maximums
 const int pumpMax = 255;
 const int pumpFTA = 200;
-const int pumpLAMP = 100;
+const int pumpLAMP = 150;
 
 // Variable defining stage of Fluid Actuation
 int actuationStage = 0;
@@ -108,10 +100,10 @@ unsigned long actuationTimer = 0;
 
 
 // Time for each actuation stage in seconds
-const int FTAValveTime = 20;
+const int FTAValveTime = 60;
 const int FTAPumpTime = 60;
 const int LampValveTime = 20;
-const int LampPumpTime = 2;
+const int LampPumpTime = 10;
 
 
 Adafruit_MAX31855 thermocouple(thermoCLK, thermoCS, thermoDO);
@@ -122,8 +114,8 @@ void setup()
 {
   // Pump/heater/light setup
   pinMode(led,OUTPUT);
-  pinMode(valveFTA,OUTPUT);
-  pinMode(valveLAMP,OUTPUT);
+  pinMode(FTAValvePin,OUTPUT);
+  pinMode(LampValvePin,OUTPUT);
   pinMode(heatPin,OUTPUT);
   pinMode(pumpPin,OUTPUT);
   Serial.begin(9600);
@@ -225,13 +217,13 @@ void loop(){
     //pumpPower = potValue;
 
   }
-
+  /*
   dataPrintCounter++;
   if(dataPrintCounter >=10){
     //SerialPrintHeatData();
     dataPrintCounter = 0;
   }
-  //Serial.println(dataPrintCounter);
+  //Serial.println(dataPrintCounter); */
 
   // If bluetooth receiverd at least minPacketSize characters
   if(bluetooth.available() >= minPacketSize)  
@@ -245,72 +237,68 @@ void loop(){
 void FluidActuationStart(){
   Serial.println("Starting Fluid Actuation");
   actuating = true;
-  // Actuation stage timer
-   actuationTimer = millis();
+  actuationStage = 1;
+  actuationTimer = millis();
 }
 
 void FluidActuationEnd(){
   Serial.println("Fluid Actuation Complete");
   fluid_state = FLUIDS_ACTUATED;
   actuating = false;
+  digitalWrite(FTAValvePin,0);
+  digitalWrite(LampValvePin,0);
+  pumpPower = 0;
   actuationStage = 0;
   // Send bluetooth command -> dont need to because the app constantly asks for it.
 }
 void fluidActuation()
 {
   switch(actuationStage){
-      case 0: 
-        //Just started - switch on FTA valve, wait for some time, move to stage 1   
-        Serial.print("FA Stage 0");     
-        digitalWrite(valveFTA,1);
-        if((millis()-actuationTimer)>=(1000*FTAValveTime/2)){
-          actuationStage = 1;
-          SerialPrintFAData();
-          actuationTimer = millis();
-        }
-        break;
-      case 1:
-        //start pump, wait for some time, switch of valve heater, wait until FTA/Ethanol has completely flushed RC (1min)
-        Serial.print("FA Stage 1");     
-        pumpPower = pumpFTA;
-        actuationTimer = millis();
-        if((millis()-actuationTimer)>(1000*FTAValveTime/2)){
-          digitalWrite(valveFTA,0);
-          SerialPrintFAData();
-          actuationTimer = millis();
-        }
-        if((millis()-actuationTimer)>(1000*FTAPumpTime)){
-          pumpPower = 0;
-          actuationStage = 2;
-          SerialPrintFAData();
-        }
-        break;
-      case 2:
-        // FTA Wash/Ethanol has gone through RC completely. Now need to open LAMP channels
-        digitalWrite(valveLAMP,1);
-        actuationTimer = millis();
-        if((millis()-actuationTimer)>(1000*LampValveTime/2)){
-          pumpPower = 0;
-          actuationStage = 3;
-          SerialPrintFAData();
-          actuationTimer = millis();
-        }
-        break;
-      case 3:
-        // pump LAMP stuff, close valve heater after some time ****NEED MORE TESTING****
-        pumpPower = pumpLAMP;
-        actuationTimer = millis();
-        if((millis()-actuationTimer)>(1000*LampValveTime/2)){
-          digitalWrite(valveLAMP,0);
-          SerialPrintFAData();
-          actuationTimer = millis();
-        }
-        if((millis()-actuationTimer)>(1000*LampPumpTime)){
-          pumpPower = 0;
-          SerialPrintFAData();
-          FluidActuationEnd();
-       }
-       break;
+      case 1: 
+          //Just started - switch on FTA valve, wait for some time, move to stage 1        
+          digitalWrite(FTAValvePin,1);
+          if((millis()-actuationTimer)>=(1000*FTAValveTime/2)){
+            actuationStage++;
+            actuationTimer = millis();
+          }
+          break;
+        case 2:
+          //start pump, wait for some time, switch of valve heater, wait until FTA/Ethanol has completely flushed RC (1min)
+          pumpPower = pumpFTA;
+          if((millis()-actuationTimer)>(1000L*FTAValveTime/2)){
+            digitalWrite(FTAValvePin,0);
+          }
+          if((millis()-actuationTimer)>(1000L*FTAPumpTime)){
+            pumpPower = 0;
+            actuationStage++;
+            actuationTimer = millis();
+          }
+          break;
+        case 3:
+          // FTA Wash/Ethanol has gone through RC completely. Now need to open LAMP channels
+          digitalWrite(LampValvePin,1);
+          if((millis()-actuationTimer)>(1000L*LampValveTime/2)){
+            pumpPower = 0;
+            actuationStage++;
+            actuationTimer = millis();
+          }
+          break;
+        case 4:
+          // pump LAMP stuff, close valve heater after some time ****NEED MORE TESTING****
+          pumpPower = pumpLAMP;
+          if((millis()-actuationTimer)>(1000L*LampValveTime/2)){
+            digitalWrite(LampValvePin,0);
+          }
+          if((millis()-actuationTimer)>(1000L*LampPumpTime)){
+            pumpPower = 0;
+            FluidActuationEnd();
+            // Send finished actuation command
+         }
+         break;
+      }
+      if((millis() - FAPrintCounter)>=1000){
+      SerialPrintFAData();
+      FAPrintCounter = millis();
     }
 }
 
@@ -514,10 +502,10 @@ void SerialPrintFAData(){
   Serial.println(OCR1B);
   
   Serial.print("   valveFTA (FTA Wash) = ");
-  Serial.println(digitalRead(valveFTA));
+  Serial.println(digitalRead(FTAValvePin));
   
   Serial.print("   valveLAMP (LAMP P5) = ");
-  Serial.println(digitalRead(valveLAMP));
+  Serial.println(digitalRead(LampValvePin));
   
   Serial.print("   C = "); 
   Serial.println(readTempC());
