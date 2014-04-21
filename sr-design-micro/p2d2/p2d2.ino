@@ -61,6 +61,7 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx); // connection to Blue SmiRF
 boolean heatingOn = false;
 boolean stable = false;
 boolean pumpTest = true;
+double temp = 0;
 
 int heatMax = 255;
 int heatPower = 0;
@@ -102,9 +103,6 @@ const int FTAValveTime = 10;
 const int FTAPumpTime = 10;
 const int LampValveTime = 10;
 const int LampPumpTime = 10;
-
-int debug = 1;
-
 
 
 Adafruit_MAX31855 thermocouple(thermoCLK, thermoCS, thermoDO);
@@ -153,14 +151,25 @@ double readTempC(){
   return (thermocouple.readCelsius());
 }
 
-
+void sendTempStatus()
+{
+  Tag heatSendTag;
+  unsigned double temp_store = (unsigned double) temp;
+  temp_store = temp_store >> 16;
+  byte temp2 = (byte) temp_store && 0xFF;
+  temp_store = temp_store >> 8;
+  byte temp1 = (byte) temp_store && 0xFF;
+  heatSendTag.setValues(TEMP_DATA, temp1, temp2);
+  Tag tagArray[] = {heatSentTag};
+  writeToBT(tagArray, 0x01);
+} 
 
 // Runs continuously after setup
 void loop(){
   /////////////////      Heater Code      ///////////////////////////////////////
   if(heatingOn){
     // Get temperature readings
-    double temp = readTempC();
+    temp = readTempC();
     if(current_error>0){
       total_error = total_error+current_error;
     }
@@ -175,6 +184,7 @@ void loop(){
       while(readTempC()<(FINAL_TEMP-boostBuffer) && readTempC()>0){
         heatPower = heatMax;
         SerialPrintHeatData();
+        sendTempStatus();
       }
       prev_temp = readTempC();
       temp = prev_temp;
@@ -206,31 +216,23 @@ void loop(){
   }
   //////////////////////////////   Fluid Actuation    ///////////////////////////////////////////
   if(actuating){ 
-    if(debug == 0)
-    {
       fluidActuation();
-    }else if(debug == 1)
-    {
-      delay(3000);
-      FluidActuationEnd();
-    }
   }
   
   // Pump Code
   if(pumpTest){
-
     //potValue = analogRead(potPin);
     //potValue = map(potValue,0,1023,0,255);
     //pumpPower = potValue;
-
   }
-  /*
+  
   dataPrintCounter++;
   if(dataPrintCounter >=10){
-    //SerialPrintHeatData();
+    SerialPrintHeatData();
+    sendTempStatus();
     dataPrintCounter = 0;
   }
-  //Serial.println(dataPrintCounter); */
+  //Serial.println(dataPrintCounter);
 
   // If bluetooth receiverd at least minPacketSize characters
   if(bluetooth.available() >= minPacketSize)  
@@ -502,23 +504,31 @@ void writeToBT(Tag tagArray[], byte size){
 }
 
 void SerialPrintFAData(){
-  
-  Serial.print("   Actuation Stage = ");
-  Serial.println(actuationStage);
-  
-  Serial.print("   pumpPower = "); 
-  Serial.println(OCR1B);
-  
-  Serial.print("   valveFTA (FTA Wash) = ");
-  Serial.println(digitalRead(FTAValvePin));
-  
-  Serial.print("   valveLAMP (LAMP P5) = ");
-  Serial.println(digitalRead(LampValvePin));
-  
-  Serial.print("   C = "); 
-  Serial.println(readTempC());
-  
-}
+    
+    Serial.print("Actuation Stage = ");
+    Serial.println(actuationStage);
+    
+    Serial.print("pumpPower = "); 
+    Serial.println(OCR1B);
+    
+    Serial.print("FTAValvePin (FTA Wash) = ");
+    Serial.println(digitalRead(FTAValvePin));
+    
+    Serial.print("LampValvePin (LAMP P5) = ");
+    Serial.println(digitalRead(LampValvePin));
+    
+    Serial.print("C = "); 
+    Serial.println(readTempC());
+    
+    Serial.print("millis = ");
+    Serial.println(millis());
+    
+    Serial.print("Actuation Timer = ");
+    Serial.println(actuationTimer);
+    
+    Serial.println("-------------");
+    
+  }
 void SerialPrintHeatData(){
   if(heatingOn){
     Serial.print("C = "); 

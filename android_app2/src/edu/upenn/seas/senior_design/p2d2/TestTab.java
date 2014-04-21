@@ -53,6 +53,8 @@ public class TestTab extends Fragment implements InstructionsFragment.Instructio
 				a.customHandler.postDelayed(a.updateTimerThread, 0);
 				a.testInProgress = true;
 				//mOpenCvCameraView.lockCamera(); //enable AWB and AE lock
+				a.mBTService.writeToBT(a.startHeating);
+				Log.d(TAG, "heating started");
 
 			}
 		});
@@ -71,7 +73,8 @@ public class TestTab extends Fragment implements InstructionsFragment.Instructio
 				resultsIntent.putExtra("fluo_data", a.fluo_data); //to pass info if needed
 				resultsIntent.putExtra("time_data", a.time_data);
 				a.mBTService.writeToBT(a.turnLEDsOff);
-				//a.mBTService.writeToBT(a.turnHeatOff);
+				Log.d(TAG, "turning LEDs off");
+				a.mBTService.writeToBT(a.stopHeating);
 				a.startActivity(resultsIntent);
 			}
 		});

@@ -58,6 +58,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		}
 	}
 	
+	public int debug = 0;
 	//Action Bar stuff
 	ViewPager Tab;
     TabPagerAdapter TabAdapter;
@@ -91,7 +92,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	public MatOfPoint cal_points;
 	public int x;
 	public int y;
-	public int touch_count = -1;
+	public int touch_count = 0;
 	public boolean cal = false;
 	public boolean boxup = false;
 	public ArrayList<Rect> channels = new ArrayList<Rect>();
@@ -113,6 +114,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	GraphTab graph_fragment = (GraphTab)getSupportFragmentManager().findFragmentById(graph_frag_id);
 	// Device stuff
 	protected boolean actuated=false;
+	protected boolean actuating = false;
 	DialogFragment actuationInstAlert;
 	
 	//Bluetooth commands
@@ -120,6 +122,16 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			(byte) 0xFF };
 	byte[] turnLEDsOff = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x3C,
 			(byte) 0x00 };
+	byte[] startHeating = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x57,
+			(byte) 0x33 };
+	byte[] stopHeating = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x57,
+			(byte) 0x00 };
+	byte[] startFluids = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x8F,
+			(byte) 0xFF };
+	byte[] stopFluids = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x8F,
+			(byte) 0x00 };
+	
+	
 	
 	
 	//constructor, necessary?
@@ -163,11 +175,13 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mBTService = ((BTConnectionService.LocalBinder) service)
 					.getService();
-
+			
 			if (mBTService == null) {
 				btNotConnected();
 			} else if (!mBTService.isConnected()) {
 				btNotConnected();
+			}else{
+				Log.d(TAG, "mBTService is connected (not null)");
 			}
 		}
 
@@ -324,11 +338,58 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			registerReceiver(mBTDisconnectReceiver, disconnectFilter);
 			
 			actuationInstruction();
-			if(mBTService==null)
-			{
-				Log.d(TAG, "mBTService is null");
-			}
-			testInstruction();
+			
+			new Thread(new Runnable() {
+		        public void run() {
+		        	Log.d(TAG, "listening for mBTService in order to start Fluid Actuation");
+					while(actuating == false){
+						
+						if(mBTService != null)
+						{
+							actuating = true;
+							Log.d(TAG, "starting fluids");
+							mBTService.writeToBT(startFluids);
+							if(debug == 1) //for demo purposes
+							{
+								try {
+									Thread.sleep(3000);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								actuated = true;
+								actuationInstAlert.dismiss();
+							}
+						}
+
+					}
+		        }
+		    }).start();
+			
+			
+			new Thread(new Runnable() {
+		        public void run() {
+		        	Log.d(TAG, "waiting for fluid actuation");
+		        	byte[] FAcheck = {(byte)0xB8, (byte)0xD3, (byte)0x01, (byte)0xFF, (byte)0x8F};
+					while(!actuated){
+						if(actuating == true)
+						{
+							mBTService.writeToBT(FAcheck);
+							try {
+								Thread.sleep(1000);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+					Log.d(TAG, "fluid has been actuated");
+					mBTService.writeToBT(turnLEDsOn);
+					Log.d(TAG, "turning LEDs on");
+					testInstruction();
+		        }
+		    }).start();
+			//testInstruction();
 			
     }
     
@@ -344,8 +405,12 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	{
 		Log.d(TAG, "onResume");
 		super.onResume();
+	}
+	@Override
+	protected void onStart()
+	{
 		
-		
+		super.onStart();
 	}
 	
 	@Override
@@ -398,7 +463,6 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		bundle.putInt("inst", 1); //1 corresponds to test instructions
 		testInstAlert.setArguments(bundle);
 		testInstAlert.show(getFragmentManager(), "test_inst");
-		//mBTService.writeToBT(turnLEDsOn);
 		}
 	
 	private void imageCalInstruction() {
@@ -415,7 +479,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		bundle.putInt("inst", 5); //5 corresponds to actuation
 		actuationInstAlert.setArguments(bundle);
 		actuationInstAlert.show(getFragmentManager(), "act_inst");
-		try {
+		/*try {
 			Thread.sleep(3000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -423,7 +487,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		}
 		Log.d(TAG, "actuated is true");
 		actuated = true;
-		actuationInstAlert.dismiss();
+		actuationInstAlert.dismiss();*/
 		//testInstruction();
 		}
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -461,13 +525,6 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		//Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_BGRA2GRAY);
 		Core.split(mRgba, rgb_channels);
 		Mat ch_g = rgb_channels.get(1);
-		
-		
-		if(touch_count == -1)
-		{
-			mBTService.writeToBT(turnLEDsOn);
-			touch_count = 0;
-		}
 		
 		if(touch_count > 8) //if the calibration routine is complete
 		{
@@ -653,7 +710,6 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			Log.i(BLUETOOTH_SERVICE, "Fluids: already actuated");
 			actuated = true;
 			actuationInstAlert.dismiss();
-			testInstruction();
 			break;
 		default:
 			Log.e(BLUETOOTH_SERVICE,
@@ -690,6 +746,6 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 				}
 			}
 		}
-		
 	}
+	
 }
