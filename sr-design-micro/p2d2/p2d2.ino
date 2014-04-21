@@ -62,6 +62,13 @@ boolean heatingOn = false;
 boolean stable = false;
 boolean pumpTest = true;
 
+const int thermoDO = 2;
+const int thermoCS = 3;
+const int thermoCLK = 4;
+const int heatPin = 11;
+const int pumpPin = 9;
+//const int potPin = A5;
+const int led = 8;
 
 int heatMax = 255;
 int heatPower = 0;
@@ -543,13 +550,6 @@ void SerialPrintHeatData(){
     Serial.println(OCR1B);
   }
 }
-
-
-
-
-
-
-
 
 
 
