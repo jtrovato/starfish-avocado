@@ -70,6 +70,8 @@ public class TestTab extends Fragment implements InstructionsFragment.Instructio
 				
 				resultsIntent.putExtra("fluo_data", a.fluo_data); //to pass info if needed
 				resultsIntent.putExtra("time_data", a.time_data);
+				a.mBTService.writeToBT(a.turnLEDsOff);
+				//a.mBTService.writeToBT(a.turnHeatOff);
 				a.startActivity(resultsIntent);
 			}
 		});

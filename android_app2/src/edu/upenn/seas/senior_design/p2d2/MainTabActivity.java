@@ -91,7 +91,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	public MatOfPoint cal_points;
 	public int x;
 	public int y;
-	public int touch_count = 0;
+	public int touch_count = -1;
 	public boolean cal = false;
 	public boolean boxup = false;
 	public ArrayList<Rect> channels = new ArrayList<Rect>();
@@ -114,6 +114,12 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	// Device stuff
 	protected boolean actuated=false;
 	DialogFragment actuationInstAlert;
+	
+	//Bluetooth commands
+	byte[] turnLEDsOn = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x3C,
+			(byte) 0xFF };
+	byte[] turnLEDsOff = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01, (byte) 0x3C,
+			(byte) 0x00 };
 	
 	
 	//constructor, necessary?
@@ -148,7 +154,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	 * Bluetooth Initializations, service/broadcast reciever definitions
 	 **************************************************************************/
 	
-	private BTConnectionService mBTService;
+	public BTConnectionService mBTService;
 	private LocalBroadcastManager manager;
 
 	// Defines callbacks for service binding, passed to bindService()
@@ -297,8 +303,6 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 				}
 			}, 10, 10, TimeUnit.SECONDS);
 
-			
-			
 			// Bind to BT Connection
 			Intent intent = new Intent(this, BTConnectionService.class);
 			bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -320,6 +324,12 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 			registerReceiver(mBTDisconnectReceiver, disconnectFilter);
 			
 			actuationInstruction();
+			if(mBTService==null)
+			{
+				Log.d(TAG, "mBTService is null");
+			}
+			testInstruction();
+			
     }
     
     @Override
@@ -388,6 +398,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		bundle.putInt("inst", 1); //1 corresponds to test instructions
 		testInstAlert.setArguments(bundle);
 		testInstAlert.show(getFragmentManager(), "test_inst");
+		//mBTService.writeToBT(turnLEDsOn);
 		}
 	
 	private void imageCalInstruction() {
@@ -404,6 +415,16 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		bundle.putInt("inst", 5); //5 corresponds to actuation
 		actuationInstAlert.setArguments(bundle);
 		actuationInstAlert.show(getFragmentManager(), "act_inst");
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Log.d(TAG, "actuated is true");
+		actuated = true;
+		actuationInstAlert.dismiss();
+		//testInstruction();
 		}
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////   Camera View Functions           /////////////////////////////////////////////////
@@ -412,6 +433,7 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 	public void onCameraViewStarted(int width, int height) {
 		mGray = new Mat();
 		mRgba = new Mat();
+		
 		
 	}
 
@@ -441,7 +463,11 @@ public class MainTabActivity extends FragmentActivity implements CvCameraViewLis
 		Mat ch_g = rgb_channels.get(1);
 		
 		
-	
+		if(touch_count == -1)
+		{
+			mBTService.writeToBT(turnLEDsOn);
+			touch_count = 0;
+		}
 		
 		if(touch_count > 8) //if the calibration routine is complete
 		{
