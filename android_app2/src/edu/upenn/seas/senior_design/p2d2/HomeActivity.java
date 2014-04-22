@@ -167,15 +167,15 @@ public class HomeActivity extends Activity implements
 	@Override
 	protected void onResume() {
 		manager = LocalBroadcastManager.getInstance(getApplicationContext());
-		
+
 		// Receiver for data
-				IntentFilter dataFilter = new IntentFilter(
-						BTConnectionService.ACTION_BT_RECIEVED);
-				manager.registerReceiver(mBTDataReceiver, dataFilter);
-				// Receiver for stopping service
-				IntentFilter stopFilter = new IntentFilter(
-						BTConnectionService.ACTION_BT_STOP);
-				manager.registerReceiver(mBTStopReceiver, stopFilter);
+		IntentFilter dataFilter = new IntentFilter(
+				BTConnectionService.ACTION_BT_RECIEVED);
+		manager.registerReceiver(mBTDataReceiver, dataFilter);
+		// Receiver for stopping service
+		IntentFilter stopFilter = new IntentFilter(
+				BTConnectionService.ACTION_BT_STOP);
+		manager.registerReceiver(mBTStopReceiver, stopFilter);
 
 		// Receiver for BT Disconnect
 		IntentFilter disconnectFilter = new IntentFilter(
@@ -232,7 +232,7 @@ public class HomeActivity extends Activity implements
 		Intent intent = new Intent(this, BTConnectionService.class);
 		mBound = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 		// Register Broadcast receivers for BT Service
-		
+
 	}
 
 	/***************************************************************************
@@ -332,6 +332,18 @@ public class HomeActivity extends Activity implements
 		switch (dataOne) {
 		case (byte) 0x11:
 			Log.e(BLUETOOTH_SERVICE, "Temperature out of range!");
+			break;
+		case (byte) 0xF0:
+			byte[] turnOffLEDs = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01,
+					(byte) 0x3C, (byte) 0x00 };
+			byte[] turnOffHeat = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01,
+					(byte) 0x57, (byte) 0x00 };
+			byte[] stopFluids = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01,
+					(byte) 0x8F, (byte) 0x00 };
+			mBTService.writeToBT(turnOffLEDs);
+			mBTService.writeToBT(turnOffHeat);
+			mBTService.writeToBT(stopFluids);
+			Log.e(BLUETOOTH_SERVICE, "Voltage out of range!");
 			break;
 		default:
 			Log.e(BLUETOOTH_SERVICE, "Bad error intent reached processError()");

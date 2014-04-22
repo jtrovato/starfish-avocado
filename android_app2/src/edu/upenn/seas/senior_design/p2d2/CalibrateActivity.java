@@ -102,18 +102,17 @@ public class CalibrateActivity extends Activity {
 			}
 		}
 	};
-	
+
 	private final BroadcastReceiver mBTDisconnectReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			btNotConnected();
 		}
 	};
-	
+
 	private void btNotConnected() {
 		new AlertDialogFragmentBT();
-		DialogFragment btAlertFragment = AlertDialogFragmentBT
-				.newInstance();
+		DialogFragment btAlertFragment = AlertDialogFragmentBT.newInstance();
 		btAlertFragment.show(getFragmentManager(), "no_BT");
 	}
 
@@ -182,9 +181,10 @@ public class CalibrateActivity extends Activity {
 		IntentFilter stopFilter = new IntentFilter(
 				BTConnectionService.ACTION_BT_STOP);
 		manager.registerReceiver(mBTStopReceiver, stopFilter);
-		
+
 		// Receiver for BT Disconnect
-		IntentFilter disconnectFilter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+		IntentFilter disconnectFilter = new IntentFilter(
+				BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
 		disconnectFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
 		registerReceiver(mBTDisconnectReceiver, disconnectFilter);
 
@@ -507,6 +507,18 @@ public class CalibrateActivity extends Activity {
 		switch (dataOne) {
 		case (byte) 0x11:
 			Log.e(BLUETOOTH_SERVICE, "Temperature out of range!");
+			break;
+		case (byte) 0xF0:
+			byte[] turnOffLEDs = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01,
+					(byte) 0x3C, (byte) 0x00 };
+			byte[] turnOffHeat = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01,
+					(byte) 0x57, (byte) 0x00 };
+			byte[] stopFluids = { (byte) 0xB8, (byte) 0xD3, (byte) 0x01,
+					(byte) 0x8F, (byte) 0x00 };
+			mBTService.writeToBT(turnOffLEDs);
+			mBTService.writeToBT(turnOffHeat);
+			mBTService.writeToBT(stopFluids);
+			Log.e(BLUETOOTH_SERVICE, "Voltage out of range!");
 			break;
 		default:
 			Log.e(BLUETOOTH_SERVICE, "Bad error intent reached processError()");

@@ -42,4 +42,9 @@
 #define STATUS_REQUEST 0xFF
 #define FULL_STATUS 0xA5
 
+//Error bytes 
+#define ERROR_MESSAGE 0xEE
+#define ERROR_OVERHEAT 0x11
+#define ERROR_LOW_VOLTAGE 0xF0
+
 

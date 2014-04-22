@@ -24,8 +24,8 @@
 /******************************************************************************
  * Variable initializations
  ******************************************************************************/
- 
- 
+
+
 //////////////////////////////   Pin Defintions     /////////////////////////// 
 // Bluetooth pins
 const int bluetoothTx = 6 ;  // TX-O pin of bluetooth mate, Arduino D2
@@ -56,6 +56,7 @@ int ledcmd; //led commands
 int fluidscmd; //fluid commands
 int minPacketSize = 5;
 SoftwareSerial bluetooth(bluetoothTx, bluetoothRx); // connection to Blue SmiRF
+int voltage_warning_count;
 
 ///////////////////////////        Heating         /////////////////////////////
 boolean heatingOn = false;
@@ -143,6 +144,7 @@ void setup()
 ISR(TIMER1_OVF_vect){
   OCR1A = heatPower;
   OCR1B = pumpPower;
+  battery_check
 }
 
 // reads in temperature from thermocouple
@@ -160,7 +162,8 @@ void sendTempStatus()
   temp_store = temp_store >> 8;
   byte temp1 = (byte) temp_store && 0xFF;
   heatSendTag.setValues(TEMP_DATA, temp1, temp2);
-  Tag tagArray[] = {heatSentTag};
+  Tag tagArray[] = {
+    heatSentTag  };
   writeToBT(tagArray, 0x01);
 } 
 
@@ -173,7 +176,7 @@ void loop(){
     if(current_error>0){
       total_error = total_error+current_error;
     }
-    
+
     else{
       total_error = total_error+(current_error);
     }
@@ -216,16 +219,16 @@ void loop(){
   }
   //////////////////////////////   Fluid Actuation    ///////////////////////////////////////////
   if(actuating){ 
-      fluidActuation();
+    fluidActuation();
   }
-  
+
   // Pump Code
   if(pumpTest){
     //potValue = analogRead(potPin);
     //potValue = map(potValue,0,1023,0,255);
     //pumpPower = potValue;
   }
-  
+
   dataPrintCounter++;
   if(dataPrintCounter >=10){
     SerialPrintHeatData();
@@ -262,54 +265,54 @@ void FluidActuationEnd(){
 }
 void fluidActuation()
 {
-  
+
   switch(actuationStage){
-      case 1: 
-          //Just started - switch on FTA valve, wait for some time, move to stage 1        
-          digitalWrite(FTAValvePin,1);
-          if((millis()-actuationTimer)>=(1000L*FTAValveTime/2)){
-            actuationStage++;
-            actuationTimer = millis();
-          }
-          break;
-        case 2:
-          //start pump, wait for some time, switch of valve heater, wait until FTA/Ethanol has completely flushed RC (1min)
-          pumpPower = pumpFTA;
-          if((millis()-actuationTimer)>(1000L*FTAValveTime/2)){
-            digitalWrite(FTAValvePin,0);
-          }
-          if((millis()-actuationTimer)>(1000L*FTAPumpTime)){
-            pumpPower = 0;
-            actuationStage++;
-            actuationTimer = millis();
-          }
-          break;
-        case 3:
-          // FTA Wash/Ethanol has gone through RC completely. Now need to open LAMP channels
-          digitalWrite(LampValvePin,1);
-          if((millis()-actuationTimer)>(1000L*LampValveTime/2)){
-            pumpPower = 0;
-            actuationStage++;
-            actuationTimer = millis();
-          }
-          break;
-        case 4:
-          // pump LAMP stuff, close valve heater after some time ****NEED MORE TESTING****
-          pumpPower = pumpLAMP;
-          if((millis()-actuationTimer)>(1000L*LampValveTime/2)){
-            digitalWrite(LampValvePin,0);
-          }
-          if((millis()-actuationTimer)>(1000L*LampPumpTime)){
-            pumpPower = 0;
-            FluidActuationEnd();
-            // Send finished actuation command
-         }
-         break;
-      }
-      if((millis() - FAPrintCounter)>=1000){
-      SerialPrintFAData();
-      FAPrintCounter = millis();
+  case 1: 
+    //Just started - switch on FTA valve, wait for some time, move to stage 1        
+    digitalWrite(FTAValvePin,1);
+    if((millis()-actuationTimer)>=(1000L*FTAValveTime/2)){
+      actuationStage++;
+      actuationTimer = millis();
     }
+    break;
+  case 2:
+    //start pump, wait for some time, switch of valve heater, wait until FTA/Ethanol has completely flushed RC (1min)
+    pumpPower = pumpFTA;
+    if((millis()-actuationTimer)>(1000L*FTAValveTime/2)){
+      digitalWrite(FTAValvePin,0);
+    }
+    if((millis()-actuationTimer)>(1000L*FTAPumpTime)){
+      pumpPower = 0;
+      actuationStage++;
+      actuationTimer = millis();
+    }
+    break;
+  case 3:
+    // FTA Wash/Ethanol has gone through RC completely. Now need to open LAMP channels
+    digitalWrite(LampValvePin,1);
+    if((millis()-actuationTimer)>(1000L*LampValveTime/2)){
+      pumpPower = 0;
+      actuationStage++;
+      actuationTimer = millis();
+    }
+    break;
+  case 4:
+    // pump LAMP stuff, close valve heater after some time ****NEED MORE TESTING****
+    pumpPower = pumpLAMP;
+    if((millis()-actuationTimer)>(1000L*LampValveTime/2)){
+      digitalWrite(LampValvePin,0);
+    }
+    if((millis()-actuationTimer)>(1000L*LampPumpTime)){
+      pumpPower = 0;
+      FluidActuationEnd();
+      // Send finished actuation command
+    }
+    break;
+  }
+  if((millis() - FAPrintCounter)>=1000){
+    SerialPrintFAData();
+    FAPrintCounter = millis();
+  }
 }
 
 // Processes status requests received over bluetooth
@@ -326,7 +329,7 @@ void status_requests(int cmd){
       }
       //Serial.println((int) ledTag.getType());
       Tag tagArray[] = {
-        ledTag      };      
+        ledTag            };      
       writeToBT(tagArray, 0x01);
       //Serial.println("//led state request");
       break;
@@ -347,7 +350,7 @@ void status_requests(int cmd){
       }
       //Serial.println((int) heatStateTag.getType());
       Tag tagArray[] = {        
-        heatStateTag                                        };      
+        heatStateTag                                              };      
       writeToBT(tagArray, 0x01);
       //Serial.println(" //heating state request");
       break;
@@ -357,7 +360,7 @@ void status_requests(int cmd){
       Tag fluidsTag;
       fluidsTag.setValues(FLUID_STATE, fluid_state);
       Tag tagArray[] = {
-        fluidsTag                                          };
+        fluidsTag                                                };
       writeToBT(tagArray, 0x01);
       //Serial.println("//fluid acutation state request");
       break;
@@ -504,31 +507,31 @@ void writeToBT(Tag tagArray[], byte size){
 }
 
 void SerialPrintFAData(){
-    
-    Serial.print("Actuation Stage = ");
-    Serial.println(actuationStage);
-    
-    Serial.print("pumpPower = "); 
-    Serial.println(OCR1B);
-    
-    Serial.print("FTAValvePin (FTA Wash) = ");
-    Serial.println(digitalRead(FTAValvePin));
-    
-    Serial.print("LampValvePin (LAMP P5) = ");
-    Serial.println(digitalRead(LampValvePin));
-    
-    Serial.print("C = "); 
-    Serial.println(readTempC());
-    
-    Serial.print("millis = ");
-    Serial.println(millis());
-    
-    Serial.print("Actuation Timer = ");
-    Serial.println(actuationTimer);
-    
-    Serial.println("-------------");
-    
-  }
+
+  Serial.print("Actuation Stage = ");
+  Serial.println(actuationStage);
+
+  Serial.print("pumpPower = "); 
+  Serial.println(OCR1B);
+
+  Serial.print("FTAValvePin (FTA Wash) = ");
+  Serial.println(digitalRead(FTAValvePin));
+
+  Serial.print("LampValvePin (LAMP P5) = ");
+  Serial.println(digitalRead(LampValvePin));
+
+  Serial.print("C = "); 
+  Serial.println(readTempC());
+
+  Serial.print("millis = ");
+  Serial.println(millis());
+
+  Serial.print("Actuation Timer = ");
+  Serial.println(actuationTimer);
+
+  Serial.println("-------------");
+
+}
 void SerialPrintHeatData(){
   if(heatingOn){
     Serial.print("C = "); 
@@ -556,6 +559,22 @@ void SerialPrintHeatData(){
     Serial.println(OCR1B);
   }
 }
+
+void battery_check(){
+  int v_battery = analogRead(A4);
+  if (v_battery < 725){
+    if (voltage_warning_count == 0){
+      Tag voltageWarningTag;
+  voltageWarningTag.setValues(ERROR_MESSAGE, ERROR_LOW_VOLTAGE);
+  Tag tagArray[] = {
+    woltageWarningTag };
+  writeToBT(tagArray, 0x01);
+      writeToBT();
+    }
+    voltage_warning_count ++;
+  }
+}
+
 
 
 

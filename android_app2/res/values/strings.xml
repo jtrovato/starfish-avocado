@@ -65,6 +65,9 @@
     <string name="no_bluetooth">Device incompatible (Bluetooth unsupported)</string>
      <string name="bt_unavailable_dialog_title">"No Bluetooth Connection"</string>
     <string name="bt_unavailable_dialog_text">"Bluetooth is disabled or not available on this device, so this part of the app is unavailable"</string>
+    <string name="battery_low_title">"Battery Low"</string>
+    <string name="battery_low_text">"The device battery is too low to continue. The lights, pump, and heater have been shut off. Please disconnect the battery."</string>
+    
 
 </resources>
 

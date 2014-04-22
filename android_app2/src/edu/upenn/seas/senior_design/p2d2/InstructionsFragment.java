@@ -141,7 +141,20 @@ public class InstructionsFragment extends DialogFragment {
 					.setTitle(getString(R.string.actuation_instruction_title))
 					.setMessage(getString(R.string.actuation_instruction_text))
 					.create();
-		} else {
+		}else if (inst == 5){
+			return new AlertDialog.Builder(getActivity())
+			.setTitle(getString(R.string.battery_low_title))
+			.setMessage(getString(R.string.battery_low_text))
+			.setNeutralButton("OK",
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog,
+								int which) {
+							dismiss();
+						}
+					}).create();
+		}
+			else {
 			return new AlertDialog.Builder(getActivity())
 					.setTitle(getString(R.string.error_instruction_title))
 					.setMessage(getString(R.string.error_instruction_text))
